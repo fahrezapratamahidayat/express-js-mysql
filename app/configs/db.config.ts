@@ -8,3 +8,15 @@ const dbConfig = {
 }
 const db = mysql.createConnection(dbConfig)
 export default db
+
+export function queryAsync(sql: string, params?: any[]): Promise<any> {
+    return new Promise((resolve, reject) => {
+        db.query(sql, params, (err, results) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+}
