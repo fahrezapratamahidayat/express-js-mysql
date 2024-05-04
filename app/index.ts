@@ -4,9 +4,10 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import routers from './routes/routers';
+import FileUpload from "express-fileupload"
 
 const app = express();
-const port = 5000;
+const port = 3000;
 dotenv.config();
 
 app.use(bodyParser.json());
@@ -22,6 +23,12 @@ app.get('/', (req, res) => {
         message: 'Hello World'
     });
 });
+app.use(FileUpload({
+    limits: { fileSize: 50 * 1024 * 1024 },
+    abortOnLimit: true,
+    createParentPath: true
+}));
+app.use(express.static("public"));
 
 // app.use((req, res, next) => {
 //     res.status(500).send('Something broke!');
