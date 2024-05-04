@@ -30,7 +30,7 @@ const authLogin = (req: Request, res: Response) => {
         const { ID_Tamu, Nama_tamu, Email_tamu, Jenis_kelamin, Umur_tamu, Nomer_telephone_tamu, Alamat_tamu, Role_tamu, Status_tamu, Pekerjaan, Dibuat_tanggal, Diupdate_tanggal } = users;
         const accessTokenSecret = process.env.ACCESS_TOKEN_AUTH || 'defaultAccessTokenSecret';
         const refreshTokenSecret = process.env.REFRESH_TOKEN_AUTH || 'defaultRefreshTokenSecret';
-        
+
         const accesToken = jwt.sign({ ID_Tamu, Nama_tamu, Email_tamu, Jenis_kelamin, Umur_tamu, Nomer_telephone_tamu, Alamat_tamu, Role_tamu, Status_tamu, Pekerjaan, Dibuat_tanggal, Diupdate_tanggal }, accessTokenSecret, { expiresIn: '15s' });
         const refreshToken = jwt.sign({ ID_Tamu, Nama_tamu, Email_tamu, Jenis_kelamin, Umur_tamu, Nomer_telephone_tamu, Alamat_tamu, Role_tamu, Status_tamu, Pekerjaan, Dibuat_tanggal, Diupdate_tanggal }, refreshTokenSecret, { expiresIn: '1d' });
 
@@ -52,6 +52,26 @@ const authLogin = (req: Request, res: Response) => {
     });
 }
 
+const authLogout = (req: Request, res: Response) => {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) return res.sendStatus(204);
+    db.query('SELECT * FROM tamu WHERE refreshToken = ?', [refreshToken], (err, result) => {
+        if (err) {
+            res.status(400).json({
+                status: 400,
+                message: "invalid token"
+            })
+        } else {
+            db.query('UPDATE tamu SET refreshToken = ? WHERE refreshToken = ?', [null, refreshToken], (err, result) => {
+                if (err) {
+                    console.log(err);
+                }
+                res.clearCookie('refreshToken');
+                return res.sendStatus(204);
+            })
+        }
+    })
+}
 const AuthRegister = (req: Request, res: Response) => {
     const { Nama_tamu, Email_tamu, Jenis_kelamin, Umur_tamu, Nomer_telephone_tamu, Alamat_tamu, Password, Role_tamu, Status_tamu, Pekerjaan, Dibuat_tanggal, Diupdate_tanggal } = req.body;
 
@@ -81,4 +101,4 @@ const AuthRegister = (req: Request, res: Response) => {
     })
 }
 
-export { authLogin, AuthRegister }
+export { authLogin, AuthRegister, authLogout }
