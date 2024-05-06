@@ -81,14 +81,15 @@ const AuthRegister = (req: Request, res: Response) => {
     db.query("SELECT * FROM tamu WHERE Email_tamu = ?", [Email_tamu], (err, result) => {
         if (err) {
             respone(400, err, "error", res, false);
-        } else if (Array.isArray(result) && result.length === 0) {
+        } else if (Array.isArray(result) && result.length > 0) {
             return res.status(400).json({
                 status: 400,
                 message: "email already exist",
             })
         } else {
-            db.query("INSERT INTO tamu (Nama_tamu, Email_tamu, Jenis_kelamin, Umur_tamu, Nomer_telephone_tamu, Alamat_tamu, Password, Role_tamu, Status_tamu, Pekerjaan, Dibuat_tanggal, Diupdate_tanggal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [Nama_tamu, Email_tamu, Jenis_kelamin, Umur_tamu, Nomer_telephone_tamu, Alamat_tamu, hashPassword, Role_tamu, Status_tamu, Pekerjaan, Dibuat_tanggal, Diupdate_tanggal], (err, result) => {
+            db.query("INSERT INTO tamu (Nama_tamu, Email_tamu, Jenis_kelamin, Umur_tamu, Nomer_telephone_tamu, Alamat_tamu, Password, Role_tamu, Status_tamu, Pekerjaan) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [Nama_tamu, Email_tamu, Jenis_kelamin, Umur_tamu, Nomer_telephone_tamu, Alamat_tamu, hashPassword, Role_tamu, Status_tamu, Pekerjaan], (err, result) => {
                 if (err) {
+                    console.log(err);
                     respone(500, err, "error", res, false);
                 } else {
                     res.status(201).json({
