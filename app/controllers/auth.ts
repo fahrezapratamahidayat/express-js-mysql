@@ -1,7 +1,7 @@
 import respone from '../utils/respone';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { ResultSetHeader } from 'mysql2';
 import db from '../configs/db.config';
 
@@ -39,8 +39,14 @@ const authLogin = (req: Request, res: Response) => {
                 console.error("Error updating database:", err);
                 return res.status(500).json({ message: 'Database update failed', error: err });
             }
-            res.cookie('refreshToken', refreshToken, {
-                httpOnly: true,
+            // res.cookie('token', accesToken, {
+            //     httpOnly: true,
+            //     maxAge: 24 * 60 * 60 * 1000
+            // });
+            res.cookie('token', accesToken, {
+                httpOnly: false,
+                secure: true,  // Hanya kirim cookie melalui HTTPS
+                sameSite: 'lax',  // Atur ke 'strict', 'lax', atau 'none'
                 maxAge: 24 * 60 * 60 * 1000
             });
             res.status(200).json({
@@ -101,5 +107,36 @@ const AuthRegister = (req: Request, res: Response) => {
         }
     })
 }
+
+// const verifyToken = (req: Request, res: Response, next: NextFunction) => {
+//     const getRefreshToken = req.cookies.token;
+
+//     if (!getRefreshToken) {
+//         return res.sendStatus(401).json({
+//             status: 401,
+//             message: "Unauthorized",
+//         });
+//     }
+//     db.query('SELECT * FROM tamu WHERE refreshToken = ?', [getRefreshToken], (err, result: ResultSetHeader) => {
+//         if (err) {
+//             console.log(err);
+//         }
+//         if (!result) {
+//             return res.sendStatus(403).json({
+//                 status: 403,
+//                 message: "Forbidden",
+//             });
+//         }
+
+//         const users = result;
+//         jwt.verify(getRefreshToken, process.env.REFRESH_TOKEN_AUTH || '', (err: any, user: any) => {
+//             if (err) return res.sendStatus(403).json({ message: 'Forbidden' });
+//             const { id, name, email, password } = user;
+//             const accesToken = jwt.sign({ id, name, email, password }, process.env.ACCESS_TOKEN_AUTH || '', { expiresIn: '20s' })
+//             res.json({ accesToken })
+//         })
+//         next();
+//     })
+// }
 
 export { authLogin, AuthRegister, authLogout }
