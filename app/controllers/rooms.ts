@@ -137,4 +137,6 @@ const UploadImages = async (req: Request, res: Response) => {
     });
 }
 
+
+
 export { getRooms, createRoom, getRoomDetails, UploadImages };
