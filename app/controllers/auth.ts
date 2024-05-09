@@ -31,8 +31,8 @@ const authLogin = (req: Request, res: Response) => {
         const accessTokenSecret = process.env.ACCESS_TOKEN_AUTH || 'defaultAccessTokenSecret';
         const refreshTokenSecret = process.env.REFRESH_TOKEN_AUTH || 'defaultRefreshTokenSecret';
 
-        const accesToken = jwt.sign({ ID_Tamu, Nama_tamu, Email_tamu, Jenis_kelamin, Umur_tamu, Nomer_telephone_tamu, Alamat_tamu, Role_tamu, Status_tamu, Pekerjaan, Dibuat_tanggal, Diupdate_tanggal }, accessTokenSecret, { expiresIn: '15s' });
-        const refreshToken = jwt.sign({ ID_Tamu, Nama_tamu, Email_tamu, Jenis_kelamin, Umur_tamu, Nomer_telephone_tamu, Alamat_tamu, Role_tamu, Status_tamu, Pekerjaan, Dibuat_tanggal, Diupdate_tanggal }, refreshTokenSecret, { expiresIn: '1d' });
+        const accesToken = jwt.sign({ Nama_tamu, Email_tamu, Jenis_kelamin, Umur_tamu, Nomer_telephone_tamu, Alamat_tamu, Role_tamu, Status_tamu, Pekerjaan, Dibuat_tanggal, Diupdate_tanggal }, accessTokenSecret, { expiresIn: '12h' });
+        const refreshToken = jwt.sign({ Nama_tamu, Email_tamu, Jenis_kelamin, Umur_tamu, Nomer_telephone_tamu, Alamat_tamu, Role_tamu, Status_tamu, Pekerjaan, Dibuat_tanggal, Diupdate_tanggal }, refreshTokenSecret, { expiresIn: '1d' });
 
         db.query("UPDATE tamu set refreshToken = ? where ID_Tamu = ?", [refreshToken, ID_Tamu], (err, result) => {
             if (err) {
