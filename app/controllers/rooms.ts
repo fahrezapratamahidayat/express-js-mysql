@@ -6,7 +6,7 @@ import { UploadedFile } from 'express-fileupload';
 import path from "path"
 
 const getRooms = (req: Request, res: Response) => {
-    db.query("SELECT kamar.*, fasilitas_kamar.Harga_kamar, fasilitas_kamar.Nama_fasilitas FROM kamar LEFT JOIN fasilitas_kamar ON kamar.No_kamar = fasilitas_kamar.No_kamar WHERE kamar.Status_kamar = 'tersedia'", (err, result: ResultSetHeader) => {
+    db.query("SELECT kamar.*, fasilitas_kamar.Harga_kamar, fasilitas_kamar.Nama_fasilitas, images.url AS Url_gambar, images.name AS Nama_gambar FROM kamar LEFT JOIN fasilitas_kamar ON kamar.No_kamar = fasilitas_kamar.No_kamar LEFT JOIN images ON kamar.No_kamar = images.No_kamar WHERE kamar.Status_kamar = 'tersedia'", (err, result: ResultSetHeader) => {
         if (err) {
             respone(400, err, "error", res);
         } else if (Array.isArray(result) && result.length === 0) {
@@ -54,8 +54,8 @@ const createRoom = async (req: Request, res: Response) => {
         return res.status(422).json({ msg: "extension not allowed" });
     }
 
-    if (fileSize > 5000000) {
-        return res.status(422).json({ msg: "Gambar harus kurang dari 5 MB" });
+    if (fileSize > 10000000) {
+        return res.status(422).json({ msg: "Gambar harus kurang dari 10 MB" });
     }
 
     try {
@@ -77,7 +77,7 @@ const createRoom = async (req: Request, res: Response) => {
 
 const getRoomDetails = (req: Request, res: Response) => {
     const roomId = req.params.id;
-    db.query("SELECT k.*, f.Nama_fasilitas, f.Harga_kamar, f.Lemari, f.Kasur, f.Kulkas, f.Kursi, f.Meja, f.Kamar_mandi, f.Bathroom, f.Sofa, f.Kapasitas, f.Keamanan, f.Layanan_tambahan, f.Aksebilitas, f.Kebersihan, f.Minibar FROM kamar k LEFT JOIN fasilitas_kamar f ON k.No_kamar = f.No_kamar WHERE k.No_kamar = ?", [roomId], (err, result) => {
+    db.query("SELECT k.*, f.Nama_fasilitas, f.Harga_kamar, f.Lemari, f.Kasur, f.Kulkas, f.Kursi, f.Meja, f.Kamar_mandi, f.Bathroom, f.Sofa, f.Kapasitas, f.Keamanan, f.Layanan_tambahan, f.Aksebilitas, f.Kebersihan, f.Minibar, i.name, i.url FROM kamar k LEFT JOIN fasilitas_kamar f ON k.No_kamar = f.No_kamar LEFT JOIN images i ON k.No_kamar = i.No_kamar WHERE k.No_kamar = ?", [roomId], (err, result) => {
         if (err) {
             respone(400, err, "error", res);
         } else if (Array.isArray(result) && result.length === 0) {
