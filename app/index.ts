@@ -6,6 +6,8 @@ import cookieParser from 'cookie-parser';
 import routers from './routes/routers';
 import FileUpload from "express-fileupload"
 
+dotenv.config() // Load the environment variables
+console.log(`The connection URL is ${process.env.DATABASE_URL}`)
 const app = express();
 const port = 3000;
 dotenv.config();
