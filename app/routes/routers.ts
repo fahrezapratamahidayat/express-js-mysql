@@ -1,25 +1,41 @@
 import { authLogin, authLogout } from "../controllers/auth";
-import { getRooms, createRoom, getRoomDetails, UploadImages } from "../controllers/rooms";
-import { getUsers, createUser } from "../controllers/users";
+import { getRooms, createRoom, getRoomDetails, deleteRoom, updateRoom, uploadImagesToRooms } from "../controllers/rooms";
+import { getUsers } from "../controllers/users";
 import express from "express"
 import { AuthRegister } from "../controllers/auth";
 import { getKabupaten, getKecamatan, getKelurahan, getProvinsi } from "../controllers/location";
+import { addReservation, confirmPayment, getReservasion, updatedReservasion } from "../controllers/reservation";
+const routers = express.Router();
 
+// Users
+routers.get('/users', getUsers);
 
-const routers = express.Router()
+// Authentication
+routers.post('/auth/login', authLogin);
+routers.post('/auth/register', AuthRegister);
+routers.post('/auth/logout', authLogout);
 
-routers.get('/getusers', getUsers);
-routers.post('/addusers', createUser);
-routers.post('/auth/login', authLogin)
-routers.post('/auth/register', AuthRegister)
-routers.post('/auth/logout', authLogout)
+// Rooms
 routers.get('/rooms', getRooms);
 routers.post('/rooms', createRoom);
-routers.get('/rooms/:id', getRoomDetails);
-routers.post('/upload', UploadImages);
-routers.get('/location/provinsi', getProvinsi);
-routers.get('/location/kabupaten/:provinsiId', getKabupaten);
-routers.get('/location/kecamatan/:kabupatenId', getKecamatan);
-routers.get('/location/kelurahan/:kecamatanId', getKelurahan);
+routers.get('/rooms/:roomId', getRoomDetails);
+routers.delete('/rooms/:roomId', deleteRoom);
+routers.post('/rooms/uploadimages/:roomId', uploadImagesToRooms);
+routers.put('/rooms/:roomId', updateRoom);
+
+
+// reservasi
+routers.post('/reservation', addReservation);
+routers.get('/reservation', getReservasion);
+routers.put('/reservation', updatedReservasion);
+
+// payment
+routers.post('/confirm-payment', confirmPayment);
+
+// Locations
+routers.get('/locations/provinces', getProvinsi);
+routers.get('/locations/districts/:provinceId', getKabupaten);
+routers.get('/locations/subdistricts/:districtId', getKecamatan);
+routers.get('/locations/villages/:subdistrictId', getKelurahan);
 
 export default routers;
