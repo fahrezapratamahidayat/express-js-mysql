@@ -1,0 +1,141 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role_tamu {
+  Admin
+  User
+}
+
+model User {
+  tamuId             Int           @id @default(autoincrement())
+  namaTamu           String        @db.VarChar(255)
+  emailTamu          String        @db.VarChar(255)
+  jenisKelamin       String        @db.Char(20)
+  umurTamu           Int           @default(0)
+  nomerTelephoneTamu String        @unique @db.VarChar(15)
+  provinsi           String        @db.VarChar(100)
+  kota               String        @db.VarChar(100)
+  kecamatan          String        @db.VarChar(100)
+  kelurahan          String        @db.VarChar(20)
+  password           String
+  roleTamu           Role_tamu     @default(User)
+  statusTamu         String
+  pekerjaan          String
+  dibuatTanggal      DateTime      @default(now())
+  diupdateTanggal    DateTime      @default(now())
+  Reservation        Reservation[]
+  payment            Payment[]
+}
+
+model Kamar {
+  nomerKamar  Int              @id @default(autoincrement())
+  namaKamar   String           @db.VarChar(255)
+  ukuranKamar String           @db.VarChar(100)
+  typeKamar   String           @db.VarChar(100)
+  ratingKamar Float            @db.Float
+  diskonKamar Float            @db.Float
+  statusKamar String           @db.VarChar(50)
+  fasilitas   FasilitasKamar[]
+  images      Image[]
+  Reservation Reservation[]
+
+  @@map("kamar")
+}
+
+enum RoomType {
+  Standard
+  Deluxe
+  Suite
+  Premium
+}
+
+model FasilitasKamar {
+  id                 Int      @id @default(autoincrement())
+  nokamar            Int
+  namaFasilitas      String   @db.VarChar(255)
+  deskripsiFasilitas String
+  hargaFasilitas     Float    @db.Float
+  typeFasilitas      RoomType
+  kamar              Kamar    @relation(fields: [nokamar], references: [nomerKamar])
+
+  @@map("fasilitas_kamar")
+}
+
+model Image {
+  id      Int    @id @default(autoincrement())
+  name    String @db.VarChar(255)
+  url     String @db.VarChar(255)
+  noKamar Int
+  kamar   Kamar  @relation(fields: [noKamar], references: [nomerKamar])
+
+  @@map("images")
+}
+
+// model Reservation {
+//   reservationId   Int       @id @default(autoincrement())
+//   noKamar         Int
+//   noTamu          Int
+//   tanggalCheckIn  DateTime
+//   tanggalCheckOut DateTime
+//   statusReservasi String    @default("pending")
+//   kamar           Kamar     @relation(fields: [noKamar], references: [nomerKamar])
+//   tamu            User      @relation(fields: [noTamu], references: [tamuId])
+//   Payment         Payment[]
+
+//   @@map("reservation")
+// }
+
+// model Payment {
+//   paymentId        Int         @id @default(autoincrement())
+//   noTamu           Int
+//   noReservasi      Int
+//   jumlahBayar      Float       @db.Float
+//   tanggalBayar     DateTime    @default(now())
+//   metodePembayaran String      @db.VarChar(50)
+//   statusPembayaran String      @db.VarChar(50)
+//   tamu             User        @relation(fields: [noTamu], references: [tamuId])
+//   reservasi        Reservation @relation(fields: [noReservasi], references: [reservationId])
+
+//   @@map("payment")
+// }
+
+model Reservation {
+  reservationId   Int      @id @default(autoincrement())
+  noKamar         Int
+  noTamu          Int
+  noPayment       Int?     @unique
+  tanggalCheckIn  DateTime
+  tanggalCheckOut DateTime
+  statusReservasi String   @default("pending")
+  kamar           Kamar    @relation(fields: [noKamar], references: [nomerKamar])
+  tamu            User     @relation(fields: [noTamu], references: [tamuId])
+  Payment         Payment?
+
+  @@map("reservation")
+}
+
+model Payment {
+  paymentId        Int         @id @default(autoincrement())
+  noTamu           Int
+  noReservasi      Int         @unique
+  jumlahBayar      Float       @db.Float
+  tanggalBayar     DateTime    @default(now())
+  metodePembayaran String      @db.VarChar(50)
+  statusPembayaran String      @db.VarChar(50)
+  tamu             User        @relation(fields: [noTamu], references: [tamuId])
+  reservasi        Reservation @relation(fields: [noReservasi], references: [reservationId])
+
+  @@map("payment")
+}
