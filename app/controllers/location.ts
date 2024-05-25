@@ -10,28 +10,28 @@ export const getProvinsi = async (req: Request, res: Response) => {
 }
 
 export const getKabupaten = async (req: Request, res: Response) => {
-    const { provinsiId } = req.params;
-    if (!provinsiId) {
+    const { provinceId } = req.params;
+    if (!provinceId) {
         return res.status(400).json({ message: "Provinsi ID is required" });
     }
-    const filteredKabupaten = kabupaten.filter((kab: any) => kab.provinsi_id === parseInt(provinsiId));
+    const filteredKabupaten = kabupaten.filter((kab: any) => kab.provinsi_id === parseInt(provinceId));
     res.json(filteredKabupaten);
 }
 
 export const getKecamatan = async (req: Request, res: Response) => {
-    const { kabupatenId } = req.params;
-    if (!kabupatenId) {
+    const { districtId } = req.params;
+    if (!districtId) {
         return res.status(400).json({ message: "Kabupaten ID is required" });
     }
-    const filteredKecamatan = kecamatan.filter((kec: any) => kec.kabupaten_id === parseInt(kabupatenId));
+    const filteredKecamatan = kecamatan.filter((kec: any) => kec.kabupaten_id === parseInt(districtId));
     res.json(filteredKecamatan);
 }
 
 export const getKelurahan = async (req: Request, res: Response) => {
-    const { kecamatanId } = req.params;
-    if (!kecamatanId) {
+    const { subdistrictId } = req.params;
+    if (!subdistrictId) {
         return res.status(400).json({ message: "Kecamatan ID is required" });
     }
-    const filteredDesa = desa.filter((d: any) => d.kecamatan_id === parseInt(kecamatanId));
+    const filteredDesa = desa.filter((d: any) => d.kecamatan_id === parseInt(subdistrictId));
     res.json(filteredDesa);
 }
