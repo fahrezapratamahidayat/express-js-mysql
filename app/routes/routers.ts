@@ -1,11 +1,12 @@
 import { authLogin, authLogout } from "../controllers/auth";
 import { getRooms, createRoom, getRoomDetails, deleteRoom, updateRoom, uploadImagesToRooms } from "../controllers/rooms";
 import { getUsers } from "../controllers/users";
-import express from "express"
+import express, { Router } from "express"
 import { AuthRegister } from "../controllers/auth";
 import { getKabupaten, getKecamatan, getKelurahan, getProvinsi } from "../controllers/location";
-import { addReservation, confirmPayment, getReservasion, updatedReservasion } from "../controllers/reservation";
-const routers = express.Router();
+import { addReservation, confirmPayment, deleteReservasion, getPaymentById, getReservasion, getReservationById, updatedReservasion } from "../controllers/reservation";
+import { authenticate } from "../middlewares/middelware";
+const routers: Router = express.Router();
 
 // Users
 routers.get('/users', getUsers);
@@ -28,9 +29,12 @@ routers.put('/rooms/:roomId', updateRoom);
 routers.post('/reservation', addReservation);
 routers.get('/reservation', getReservasion);
 routers.put('/reservation', updatedReservasion);
+routers.delete('/reservation/:reservationId', deleteReservasion);
+routers.get('/reservation/:reservationId', getReservationById);
 
 // payment
 routers.post('/confirm-payment', confirmPayment);
+routers.get(`//payments/:paymentId`, getPaymentById);
 
 // Locations
 routers.get('/locations/provinces', getProvinsi);
