@@ -40,16 +40,19 @@ model User {
 }
 
 model Kamar {
-  nomerKamar  Int              @id @default(autoincrement())
-  namaKamar   String           @db.VarChar(255)
-  ukuranKamar String           @db.VarChar(100)
-  typeKamar   String           @db.VarChar(100)
-  ratingKamar Float            @db.Float
-  diskonKamar Float            @db.Float
-  statusKamar String           @db.VarChar(50)
-  fasilitas   FasilitasKamar[]
-  images      Image[]
-  Reservation Reservation[]
+  nomerKamar     Int             @id @default(autoincrement())
+  namaKamar      String          @db.VarChar(255)
+  ukuranKamar    String          @db.VarChar(100)
+  deskripsiKamar String          @db.VarChar(255)
+  hargaKamar     Float           @default(0) @db.Float
+  typeKamar      String          @db.VarChar(100)
+  ratingKamar    Float           @db.Float
+  diskonKamar    Float           @db.Float
+  statusKamar    String          @db.VarChar(50)
+  fasilitasId    Int?
+  fasilitasKamar FasilitasKamar? @relation(fields: [fasilitasId], references: [id], onDelete: Cascade)
+  images         Image[]
+  Reservation    Reservation[]
 
   @@map("kamar")
 }
@@ -68,7 +71,7 @@ model FasilitasKamar {
   deskripsiFasilitas String
   hargaFasilitas     Float    @db.Float
   typeFasilitas      RoomType
-  kamar              Kamar    @relation(fields: [nokamar], references: [nomerKamar])
+  Kamar              Kamar[]
 
   @@map("fasilitas_kamar")
 }
@@ -78,7 +81,7 @@ model Image {
   name    String @db.VarChar(255)
   url     String @db.VarChar(255)
   noKamar Int
-  kamar   Kamar  @relation(fields: [noKamar], references: [nomerKamar])
+  kamar   Kamar  @relation(fields: [noKamar], references: [nomerKamar], onDelete: Cascade)
 
   @@map("images")
 }
@@ -118,9 +121,10 @@ model Reservation {
   noPayment       Int?     @unique
   tanggalCheckIn  DateTime
   tanggalCheckOut DateTime
+  durasiMenginap  Int      @default(1)
   statusReservasi String   @default("pending")
-  kamar           Kamar    @relation(fields: [noKamar], references: [nomerKamar])
-  tamu            User     @relation(fields: [noTamu], references: [tamuId])
+  kamar           Kamar    @relation(fields: [noKamar], references: [nomerKamar], onDelete: Cascade)
+  tamu            User     @relation(fields: [noTamu], references: [tamuId], onDelete: Cascade)
   Payment         Payment?
 
   @@map("reservation")
@@ -132,10 +136,11 @@ model Payment {
   noReservasi      Int         @unique
   jumlahBayar      Float       @db.Float
   tanggalBayar     DateTime    @default(now())
+  batasWaktuBayar  DateTime    @default(now())
   metodePembayaran String      @db.VarChar(50)
   statusPembayaran String      @db.VarChar(50)
-  tamu             User        @relation(fields: [noTamu], references: [tamuId])
-  reservasi        Reservation @relation(fields: [noReservasi], references: [reservationId])
+  tamu             User        @relation(fields: [noTamu], references: [tamuId], onDelete: Cascade)
+  reservasi        Reservation @relation(fields: [noReservasi], references: [reservationId], onDelete: Cascade)
 
   @@map("payment")
 }
