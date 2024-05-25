@@ -32,18 +32,24 @@ const authLogin = async (req: Request, res: Response) => {
             }
 
             const token = jwt.sign({
-                id: selectUser.tamuId,
-                name: selectUser.namaTamu,
-                email: selectUser.emailTamu,
+                tamuId: selectUser.tamuId,
+                namaTamu: selectUser.namaTamu,
+                emailTamu: selectUser.emailTamu,
                 password: selectUser.password,
-                role: selectUser.roleTamu,
-                status: selectUser.statusTamu,
+                roleTamu: selectUser.roleTamu,
+                statusTamu: selectUser.statusTamu,
                 pekerjaan: selectUser.pekerjaan,
-                createdAt: selectUser.dibuatTanggal,
-                updatedAt: selectUser.diupdateTanggal,
+                dibuatTanggal: selectUser.dibuatTanggal,
+                diupdateTanggal: selectUser.diupdateTanggal,
+                nomerTelephoneTamu: selectUser.nomerTelephoneTamu,
+                provinsi: selectUser.provinsi,
+                kota: selectUser.kota,
+                kecamatan: selectUser.kecamatan,
+                kelurahan: selectUser.kelurahan,
+                umurTamu: selectUser.umurTamu,
             }, process.env.ACCESS_TOKEN_AUTH as string, { expiresIn: '1d' });
-            res.cookie('token', token, {
-                httpOnly: false,
+            res.cookie('refreshToken', token, {
+                httpOnly: true,
                 secure: true,
                 sameSite: 'lax',
                 maxAge: 24 * 60 * 60 * 1000
@@ -57,10 +63,6 @@ const authLogin = async (req: Request, res: Response) => {
     } catch (error: any) {
         return res.json({ error: error.message })
     }
-}
-
-const authLogout = (req: Request, res: Response) => {
-
 }
 const AuthRegister = async (req: Request, res: Response) => {
     const { namaTamu, emailTamu, jenisKelamin, umurTamu, nomerTelephoneTamu, provinsi, kota, kecamatan, kelurahan, password, roleTamu, statusTamu, pekerjaan } = req.body;
@@ -117,6 +119,10 @@ const AuthRegister = async (req: Request, res: Response) => {
             message: error.message
         });
     }
+}
+
+const authLogout = (req: Request, res: Response) => {
+
 }
 
 export { authLogin, AuthRegister, authLogout }
