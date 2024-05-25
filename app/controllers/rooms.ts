@@ -10,9 +10,9 @@ export const getRooms = async (req: Request, res: Response) => {
     try {
         const getRooms = await prisma.kamar.findMany({
             include: {
-                // fasilitas: true,
-                images: true
-            }
+                fasilitasKamar: true,
+                images: true,
+            },
         })
         if (!getRooms) {
             res.json({
@@ -26,12 +26,15 @@ export const getRooms = async (req: Request, res: Response) => {
             data: getRooms
         })
     } catch (error) {
-
+        res.json({
+            status: 400,
+            msg: error
+        })
     }
 }
 
 export const createRoom = async (req: Request, res: Response) => {
-    const { namaKamar, ukuranKamar, typeKamar, ratingKamar, diskonKamar, statusKamar, namaFasilitas, deskripsiFasilitas, hargaFasilitas, typeFasilitas } = req.body;
+    const { namaKamar, ukuranKamar, deskripsiKamar, typeKamar, ratingKamar, diskonKamar, statusKamar, namaFasilitas, deskripsiFasilitas, hargaFasilitas, typeFasilitas, namaGambar } = req.body;
     try {
         if (!req.files || !req.files.file) {
             return res.status(400).json({ msg: "Tolong Upload Gambar" });
@@ -53,11 +56,18 @@ export const createRoom = async (req: Request, res: Response) => {
         const ratingKamarFloat = parseFloat(ratingKamar);
         const diskonKamarFloat = parseFloat(diskonKamar);
         const hargaFasilitasFloat = parseFloat(hargaFasilitas);
+
+        let hargaKamar = 10000 * ratingKamarFloat;
+        hargaKamar -= hargaKamar * (diskonKamarFloat / 100);
+
+        hargaKamar += hargaFasilitasFloat;
         const createKamar = await prisma.kamar.create({
             data: {
                 namaKamar: namaKamar,
                 ukuranKamar: ukuranKamar,
                 typeKamar: typeKamar,
+                deskripsiKamar: deskripsiKamar,
+                hargaKamar: hargaKamar,
                 ratingKamar: ratingKamarFloat,
                 diskonKamar: diskonKamarFloat,
                 statusKamar: statusKamar,
@@ -76,8 +86,17 @@ export const createRoom = async (req: Request, res: Response) => {
                 const createImage = await prisma.image.create({
                     data: {
                         noKamar: dataKamar.nomerKamar,
-                        name: fileName,
+                        name: namaGambar,
                         url: url,
+                    }
+                })
+                await prisma.kamar.update({
+                    where: {
+                        nomerKamar: dataKamar.nomerKamar
+                    },
+                    data: {
+                        hargaKamar: dataKamar.hargaKamar + dataFasilitas.hargaFasilitas,
+                        fasilitasId: dataFasilitas.id
                     }
                 })
                 res.status(201).json({ msg: "Kamar dan fasilitas berhasil dibuat" });
@@ -125,7 +144,7 @@ export const uploadImagesToRooms = async (req: Request, res: Response) => {
 
 export const deleteRoom = async (req: Request, res: Response) => {
     try {
-        const roomId = parseFloat(req.params.id);
+        const roomId = parseFloat(req.params.roomId);
         const deleteRoom = await prisma.kamar.delete({
             where: {
                 nomerKamar: roomId
@@ -144,7 +163,7 @@ export const deleteRoom = async (req: Request, res: Response) => {
     } catch (error: any) {
         return res.json({
             status: 400,
-            message: "failed to delete"
+            message: error.message
         })
     }
 }
@@ -186,7 +205,7 @@ export const getRoomDetails = async (req: Request, res: Response) => {
                 nomerKamar: roomId
             },
             include: {
-                fasilitas: true,
+                fasilitasKamar: true,
                 images: true,
             }
         })
