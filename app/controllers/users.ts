@@ -15,6 +15,13 @@ const getUsers = async (req: Request, res: Response) => {
                 pekerjaan: true,
                 dibuatTanggal: true,
                 diupdateTanggal: true,
+                jenisKelamin: true,
+                provinsi: true,
+                kecamatan: true,
+                kelurahan: true,
+                kota: true,
+                nomerTelephoneTamu: true,
+                umurTamu: true
             }
         });
         if (!getAllUsers) {
