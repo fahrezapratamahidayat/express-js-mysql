@@ -4,7 +4,7 @@ import { getUsers } from "../controllers/users";
 import express, { Router } from "express"
 import { AuthRegister } from "../controllers/auth";
 import { getKabupaten, getKecamatan, getKelurahan, getProvinsi } from "../controllers/location";
-import { addReservation, confirmPayment, deleteReservasion, getPaymentById, getReservasion, getReservationById, updatedReservasion } from "../controllers/reservation";
+import { addReservation, confirmPayment, deleteReservasion, getPaymentById, getReservasion, getReservationById, getReservationByUserId, updatedReservasion } from "../controllers/reservation";
 import { authenticate } from "../middlewares/middelware";
 const routers: Router = express.Router();
 
@@ -31,6 +31,7 @@ routers.get('/reservation', getReservasion);
 routers.put('/reservation', updatedReservasion);
 routers.delete('/reservation/:reservationId', deleteReservasion);
 routers.get('/reservation/:reservationId', getReservationById);
+routers.get(`/reservation/user/:userId`, getReservationByUserId);
 
 // payment
 routers.post('/confirm-payment', confirmPayment);

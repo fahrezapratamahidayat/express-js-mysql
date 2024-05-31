@@ -7,103 +7,212 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const getRooms = async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
     try {
         const getRooms = await prisma.kamar.findMany({
+            skip: skip,
+            take: limit,
             include: {
-                fasilitasKamar: true,
-                images: true,
+                Gambar: true,
             },
-        })
-        if (!getRooms) {
+        });
+        const totalRooms = await prisma.kamar.count();
+        const totalPages = Math.ceil(totalRooms / limit);
+
+        if (!getRooms.length) {
             res.json({
                 status: 404,
                 msg: "data not found"
-            })
+            });
+        } else {
+            res.json({
+                status: 200,
+                msg: "success",
+                data: getRooms,
+                currentPage: page,
+                totalPages: totalPages,
+                totalRooms,
+                limit: limit
+            });
         }
-        res.json({
-            status: 200,
-            msg: "success",
-            data: getRooms
-        })
-    } catch (error) {
+    } catch (error: any) {
         res.json({
             status: 400,
-            msg: error
-        })
+            msg: error.message || error
+        });
     }
 }
 
+// export const createRoom = async (req: Request, res: Response) => {
+//     const { namaKamar, ukuranKamar, deskripsiKamar, typeKamar, ratingKamar, diskonKamar, statusKamar, namaFasilitas, deskripsiFasilitas, hargaFasilitas, typeFasilitas, namaGambar } = req.body;
+//     try {
+//         if (!req.files || !req.files.file) {
+//             return res.status(400).json({ msg: "Tolong Upload Gambar" });
+//         }
+//         const file = req.files.file as UploadedFile;
+//         const fileSize = file.data.length;
+//         const ext = path.extname(file.name);
+//         const fileName = file.md5 + ext;
+//         const url = `${req.protocol}://${req.get("host")}/images/${fileName}`;
+//         const allowedType = ['.png', '.jpg', '.jpeg'];
+
+//         if (!allowedType.includes(ext.toLowerCase())) {
+//             return res.status(422).json({ msg: "extension not allowed" });
+//         }
+
+//         if (fileSize > 10000000) {
+//             return res.status(422).json({ msg: "Gambar harus kurang dari 10 MB" });
+//         }
+//         const ratingKamarFloat = parseFloat(ratingKamar);
+//         const diskonKamarFloat = parseFloat(diskonKamar);
+//         const hargaFasilitasFloat = parseFloat(hargaFasilitas);
+
+//         let hargaKamarBase;
+//         switch (typeKamar) {
+//             case "Standard":
+//                 hargaKamarBase = 150000;
+//                 break;
+//             case "Deluxe":
+//                 hargaKamarBase = 200000;
+//                 break;
+//             case "Suite":
+//                 hargaKamarBase = 250000;
+//                 break;
+//             case "Premium":
+//                 hargaKamarBase = 280000;
+//                 break;
+//             default:
+//                 hargaKamarBase = 0;
+//         }
+//         const createKamar = await prisma.kamar.create({
+//             data: {
+//                 namaKamar: namaKamar,
+//                 ukuranKamar: ukuranKamar,
+//                 typeKamar: typeKamar,
+//                 deskripsiKamar: deskripsiKamar,
+//                 hargaKamar: hargaKamarBase,
+//                 ratingKamar: 0,
+//                 diskonKamar: diskonKamarFloat,
+//                 statusKamar: statusKamar,
+//             }
+//         }).then(async (dataKamar) => {
+//             const createFasilitas = await prisma.fasilitasKamar.create({
+//                 data: {
+//                     nokamar: dataKamar.nomerKamar,
+//                     namaFasilitas,
+//                     deskripsiFasilitas,
+//                     hargaFasilitas: hargaKamarBase,
+//                     typeFasilitas: typeKamar,
+//                 }
+//             }).then(async (dataFasilitas) => {
+//                 await file.mv(`./public/images/${fileName}`);
+//                 const createImage = await prisma.image.create({
+//                     data: {
+//                         noKamar: dataKamar.nomerKamar,
+//                         name: file.name,
+//                         url: url,
+//                     }
+//                 })
+//                 await prisma.kamar.update({
+//                     where: {
+//                         nomerKamar: dataKamar.nomerKamar
+//                     },
+//                     data: {
+//                         hargaKamar: dataKamar.hargaKamar + dataFasilitas.hargaFasilitas,
+//                         fasilitasId: dataFasilitas.id
+//                     }
+//                 })
+//                 res.status(201).json({ msg: "Kamar dan fasilitas berhasil dibuat" });
+//             }).catch((err) => {
+//                 return res.status(500).json({ msg: err.message });
+//             })
+//         })
+//     } catch (error: any) {
+//         return res.status(500).json({ msg: error.message });
+//     }
+// }
 export const createRoom = async (req: Request, res: Response) => {
-    const { namaKamar, ukuranKamar, deskripsiKamar, typeKamar, ratingKamar, diskonKamar, statusKamar, namaFasilitas, deskripsiFasilitas, hargaFasilitas, typeFasilitas, namaGambar } = req.body;
+    const { namaKamar, ukuranKamar, deskripsiKamar, typeKamar, ratingKamar, diskonKamar, statusKamar, namaFasilitas, deskripsiFasilitas, hargaFasilitas, typeFasilitas } = req.body;
     try {
         if (!req.files || !req.files.file) {
-            return res.status(400).json({ msg: "Tolong Upload Gambar" });
+            return res.status(400).json({ msg: "Tambahkan Gambar untuk kamar minimal 1!" });
         }
-        const file = req.files.file as UploadedFile;
-        const fileSize = file.data.length;
-        const ext = path.extname(file.name);
-        const fileName = file.md5 + ext;
-        const url = `${req.protocol}://${req.get("host")}/images/${fileName}`;
+        const files = Array.isArray(req.files.file) ? req.files.file : [req.files.file];
         const allowedType = ['.png', '.jpg', '.jpeg'];
 
-        if (!allowedType.includes(ext.toLowerCase())) {
-            return res.status(422).json({ msg: "extension not allowed" });
+        for (const file of files) {
+            const fileSize = file.data.length;
+            const ext = path.extname(file.name);
+            if (!allowedType.includes(ext.toLowerCase())) {
+                return res.status(422).json({ msg: "extension not allowed" });
+            }
+            if (fileSize > 10000000) {
+                return res.status(422).json({ msg: "Gambar harus kurang dari 10 MB" });
+            }
         }
 
-        if (fileSize > 10000000) {
-            return res.status(422).json({ msg: "Gambar harus kurang dari 10 MB" });
-        }
         const ratingKamarFloat = parseFloat(ratingKamar);
         const diskonKamarFloat = parseFloat(diskonKamar);
         const hargaFasilitasFloat = parseFloat(hargaFasilitas);
 
-        let hargaKamar = 10000 * ratingKamarFloat;
-        hargaKamar -= hargaKamar * (diskonKamarFloat / 100);
+        let hargaKamarBase;
+        switch (typeKamar) {
+            case "Standard":
+                hargaKamarBase = 150000;
+                break;
+            case "Deluxe":
+                hargaKamarBase = 200000;
+                break;
+            case "Suite":
+                hargaKamarBase = 250000;
+                break;
+            case "Premium":
+                hargaKamarBase = 280000;
+                break;
+            default:
+                hargaKamarBase = 0;
+        }
 
-        hargaKamar += hargaFasilitasFloat;
-        const createKamar = await prisma.kamar.create({
+        const createdRoom = await prisma.kamar.create({
             data: {
                 namaKamar: namaKamar,
                 ukuranKamar: ukuranKamar,
-                typeKamar: typeKamar,
+                tipeKamar: typeKamar,
                 deskripsiKamar: deskripsiKamar,
-                hargaKamar: hargaKamar,
-                ratingKamar: ratingKamarFloat,
+                hargaKamar: hargaKamarBase,
+                ratingKamar: 0,
                 diskonKamar: diskonKamarFloat,
                 statusKamar: statusKamar,
             }
-        }).then(async (dataKamar) => {
-            const createFasilitas = await prisma.fasilitasKamar.create({
+        });
+
+        for (const file of files) {
+            const ext = path.extname(file.name);
+            const fileName = file.md5 + ext;
+            const url = `${req.protocol}://${req.get("host")}/images/${fileName}`;
+            await file.mv(`./public/images/${fileName}`);
+            await prisma.gambar.create({
                 data: {
-                    nokamar: dataKamar.nomerKamar,
-                    namaFasilitas,
-                    deskripsiFasilitas,
-                    hargaFasilitas: hargaFasilitasFloat,
-                    typeFasilitas,
+                    idKamar: createdRoom.idKamar,
+                    namaGambar: file.name,
+                    urlGambar: url,
                 }
-            }).then(async (dataFasilitas) => {
-                await file.mv(`./public/images/${fileName}`);
-                const createImage = await prisma.image.create({
-                    data: {
-                        noKamar: dataKamar.nomerKamar,
-                        name: namaGambar,
-                        url: url,
-                    }
-                })
-                await prisma.kamar.update({
-                    where: {
-                        nomerKamar: dataKamar.nomerKamar
-                    },
-                    data: {
-                        hargaKamar: dataKamar.hargaKamar + dataFasilitas.hargaFasilitas,
-                        fasilitasId: dataFasilitas.id
-                    }
-                })
-                res.status(201).json({ msg: "Kamar dan fasilitas berhasil dibuat" });
-            }).catch((err) => {
-                return res.status(500).json({ msg: err.message });
-            })
-        })
+            });
+        }
+
+        await prisma.kamar.update({
+            where: {
+                idKamar: createdRoom.idKamar
+            },
+            data: {
+                hargaKamar: createdRoom.hargaKamar
+            }
+        });
+
+        res.status(201).json({ msg: "Kamar dan fasilitas berhasil dibuat" });
     } catch (error: any) {
         return res.status(500).json({ msg: error.message });
     }
@@ -128,11 +237,11 @@ export const uploadImagesToRooms = async (req: Request, res: Response) => {
         if (fileSize > 10000000) {
             return res.status(422).json({ msg: "Gambar harus kurang dari 10 MB" });
         }
-        const createImage = await prisma.image.create({
+        const createImage = await prisma.gambar.create({
             data: {
-                noKamar: parseFloat(req.params.roomId),
-                name: req.body.title,
-                url: url,
+                idKamar: parseFloat(req.params.roomId),
+                namaGambar: req.body.title,
+                urlGambar: url,
             }
         })
         await file.mv(`./public/images/${fileName}`);
@@ -147,7 +256,7 @@ export const deleteRoom = async (req: Request, res: Response) => {
         const roomId = parseFloat(req.params.roomId);
         const deleteRoom = await prisma.kamar.delete({
             where: {
-                nomerKamar: roomId
+                idKamar: roomId
             }
         })
         if (!deleteRoom) {
@@ -169,31 +278,98 @@ export const deleteRoom = async (req: Request, res: Response) => {
 }
 
 export const updateRoom = async (req: Request, res: Response) => {
+    const roomId = parseFloat(req.params.roomId);
+    const { namaKamar, ukuranKamar, deskripsiKamar, typeKamar, ratingKamar, diskonKamar, statusKamar, namaFasilitas, deskripsiFasilitas, hargaFasilitas, typeFasilitas } = req.body;
+
+    let hargaKamarBase;
+    switch (typeKamar) {
+        case "Standard":
+            hargaKamarBase = 150000;
+            break;
+        case "Deluxe":
+            hargaKamarBase = 200000;
+            break;
+        case "Suite":
+            hargaKamarBase = 250000;
+            break;
+        case "Premium":
+            hargaKamarBase = 280000;
+            break;
+        default:
+            hargaKamarBase = 0;
+    }
+
     try {
-        const roomId = parseFloat(req.params.roomId);
         const updateRoom = await prisma.kamar.update({
             where: {
-                nomerKamar: roomId
+                idKamar: roomId
             },
             data: {
-                ...req.body
+                namaKamar: namaKamar,
+                ukuranKamar: ukuranKamar,
+                deskripsiKamar: deskripsiKamar,
+                tipeKamar: typeKamar,
+                ratingKamar: ratingKamar,
+                diskonKamar: parseInt(diskonKamar),
+                statusKamar: statusKamar,
+                hargaKamar: hargaKamarBase
             }
-        })
-        if (!updateRoom) {
-            return res.json({
-                status: 404,
-                message: "Data kamar tidak ditemukan"
-            })
+        });
+
+        // Handle multiple image uploads if there are any files
+        if (req.files && req.files.file) {
+            const files = Array.isArray(req.files.file) ? req.files.file : [req.files.file];
+            const allowedType = ['.png', '.jpg', '.jpeg'];
+
+            for (const file of files) {
+                const fileSize = file.data.length;
+                const ext = path.extname(file.name);
+                const fileName = file.md5 + ext;
+                const url = `${req.protocol}://${req.get("host")}/images/${fileName}`;
+
+                if (!allowedType.includes(ext.toLowerCase())) {
+                    return res.status(422).json({ msg: "extension not allowed" });
+                }
+
+                if (fileSize > 10000000) {
+                    return res.status(422).json({ msg: "Gambar harus kurang dari 10 MB" });
+                }
+
+                // Move the file to the public directory
+                await file.mv(`./public/images/${fileName}`);
+
+                // Update or create image record
+                const existingImage = await prisma.gambar.findFirst({
+                    where: { idKamar: roomId, namaGambar: file.name }
+                });
+
+                if (existingImage) {
+                    await prisma.gambar.update({
+                        where: { idGambar: existingImage.idGambar },
+                        data: { urlGambar: url }
+                    });
+                } else {
+                    await prisma.gambar.create({
+                        data: {
+                            idKamar: roomId,
+                            namaGambar: file.name,
+                            urlGambar: url,
+                        }
+                    });
+                }
+            }
         }
+
         return res.json({
             status: 200,
-            message: "data updated"
-        })
+            message: "Data kamar dan gambar berhasil diperbarui",
+            data: updateRoom
+        });
     } catch (error: any) {
-        return res.json({
+        return res.status(400).json({
             status: 400,
             message: error.message
-        })
+        });
     }
 }
 
@@ -202,11 +378,10 @@ export const getRoomDetails = async (req: Request, res: Response) => {
         const roomId = parseFloat(req.params.roomId);
         const getDetailRooms = await prisma.kamar.findFirst({
             where: {
-                nomerKamar: roomId
+                idKamar: roomId
             },
             include: {
-                fasilitasKamar: true,
-                images: true,
+                Gambar: true,
             }
         })
         if (!getDetailRooms) {

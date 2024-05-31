@@ -5,22 +5,22 @@ const prisma = new PrismaClient();
 
 const getUsers = async (req: Request, res: Response) => {
     try {
-        const getAllUsers = await prisma.user.findMany({
+        const getAllUsers = await prisma.tamu.findMany({
             select: {
-                tamuId: true,
+                idTamu: true,
                 namaTamu: true,
                 emailTamu: true,
-                roleTamu: true,
+                peranTamu: true,
                 statusTamu: true,
                 pekerjaan: true,
-                dibuatTanggal: true,
-                diupdateTanggal: true,
+                tanggalDibuat: true,
+                tanggalDiupdate: true,
                 jenisKelamin: true,
                 provinsi: true,
                 kecamatan: true,
                 kelurahan: true,
                 kota: true,
-                nomerTelephoneTamu: true,
+                nomorTeleponTamu: true,
                 umurTamu: true
             }
         });

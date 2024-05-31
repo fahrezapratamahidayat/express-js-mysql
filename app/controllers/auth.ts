@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 const authLogin = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     try {
-        const findUsers = await prisma.user.findFirst({
+        const findUsers = await prisma.tamu.findFirst({
             where: {
                 emailTamu: email
             }
@@ -17,13 +17,13 @@ const authLogin = async (req: Request, res: Response) => {
         if (!findUsers) {
             return respone(404, "user not found", "error", res, false);
         }
-        const selectUser = await prisma.user.findFirst({
+        const selectUser = await prisma.tamu.findFirst({
             where: {
                 emailTamu: email
             }
         })
         if (selectUser) {
-            const confirmPassowrd = bcryptjs.compareSync(password, selectUser.password);
+            const confirmPassowrd = bcryptjs.compareSync(password, selectUser.kataSandi);
             if (!confirmPassowrd) {
                 return res.status(400).json({
                     status: 400,
@@ -32,16 +32,16 @@ const authLogin = async (req: Request, res: Response) => {
             }
 
             const token = jwt.sign({
-                tamuId: selectUser.tamuId,
+                idTamu: selectUser.idTamu,
                 namaTamu: selectUser.namaTamu,
                 emailTamu: selectUser.emailTamu,
-                password: selectUser.password,
-                roleTamu: selectUser.roleTamu,
+                password: selectUser.kataSandi,
+                peranTamu: selectUser.peranTamu,
                 statusTamu: selectUser.statusTamu,
                 pekerjaan: selectUser.pekerjaan,
-                dibuatTanggal: selectUser.dibuatTanggal,
-                diupdateTanggal: selectUser.diupdateTanggal,
-                nomerTelephoneTamu: selectUser.nomerTelephoneTamu,
+                tanggalDibuat: selectUser.tanggalDibuat,
+                tanggalDiupdate: selectUser.tanggalDiupdate,
+                nomorTeleponTamu: selectUser.nomorTeleponTamu,
                 provinsi: selectUser.provinsi,
                 kota: selectUser.kota,
                 kecamatan: selectUser.kecamatan,
@@ -67,7 +67,7 @@ const authLogin = async (req: Request, res: Response) => {
 const AuthRegister = async (req: Request, res: Response) => {
     const { namaTamu, emailTamu, jenisKelamin, umurTamu, nomerTelephoneTamu, provinsi, kota, kecamatan, kelurahan, password, roleTamu, statusTamu, pekerjaan } = req.body;
     try {
-        const findTamu = await prisma.user.findMany({
+        const findTamu = await prisma.tamu.findMany({
             where: {
                 emailTamu: emailTamu
             }
@@ -78,9 +78,9 @@ const AuthRegister = async (req: Request, res: Response) => {
                 message: "email already exist"
             })
         }
-        const findNoHp = await prisma.user.findMany({
+        const findNoHp = await prisma.tamu.findMany({
             where: {
-                nomerTelephoneTamu: nomerTelephoneTamu
+                nomorTeleponTamu: nomerTelephoneTamu
             }
         })
         if (findNoHp.length > 0) {
@@ -91,19 +91,19 @@ const AuthRegister = async (req: Request, res: Response) => {
         }
         const salt = bcryptjs.genSaltSync(10);
         const hashPassword = bcryptjs.hashSync(password, salt);
-        const AddTamu = await prisma.user.create({
+        const AddTamu = await prisma.tamu.create({
             data: {
                 namaTamu,
                 emailTamu,
                 jenisKelamin,
                 umurTamu,
-                nomerTelephoneTamu,
+                nomorTeleponTamu: nomerTelephoneTamu,
                 provinsi,
                 kota,
                 kecamatan,
                 kelurahan,
-                password: hashPassword,
-                roleTamu,
+                kataSandi: hashPassword,
+                peranTamu: roleTamu,
                 statusTamu,
                 pekerjaan,
             }

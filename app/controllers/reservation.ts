@@ -6,28 +6,27 @@ import { addDays, format } from "date-fns";
 const prisma = new PrismaClient();
 
 export const addReservation = async (req: Request, res: Response) => {
-    const { noKamar, noTamu, checkIn, durasiInap } = req.body;
+    const { noKamar, noTamu, checkIn, durasiInap, jumlahTamu, permintaanTamu } = req.body;
     const tanggalCheckIn = new Date(checkIn);
     const checkOutDate = addDays(tanggalCheckIn, parseInt(durasiInap));
 
     try {
         const result = await prisma.$transaction(async (prisma) => {
-            const reservation = await prisma.reservation.create({
+            const reservation = await prisma.reservasi.create({
                 data: {
-                    noKamar: parseInt(noKamar),
-                    noTamu: parseInt(noTamu),
+                    idKamar: parseInt(noKamar),
+                    idTamu: parseInt(noTamu),
                     tanggalCheckIn,
                     tanggalCheckOut: checkOutDate,
                     durasiMenginap: parseInt(durasiInap),
+                    jumlahTamu: parseInt(jumlahTamu),
+                    permintaanTamu
                 }
             });
             const tarifKamar = await prisma.kamar.findUnique({
                 where: {
-                    nomerKamar: reservation.noKamar
+                    idKamar: reservation.idKamar
                 },
-                include: {
-                    fasilitasKamar: true
-                }
             })
             if (!tarifKamar) {
                 return res.json({
@@ -35,33 +34,32 @@ export const addReservation = async (req: Request, res: Response) => {
                     message: "Kamar tidak ditemukan"
                 })
             }
-            const totalHargaFasilitas = tarifKamar.fasilitasKamar?.hargaFasilitas || 0;
-            const jumlahBayar = (tarifKamar.hargaKamar * parseInt(durasiInap) * (1 - tarifKamar.diskonKamar / 100)) + totalHargaFasilitas;
-            const url = `http://localhost:5173/confirm_payment/${reservation.reservationId}`;
+            const jumlahBayar = (tarifKamar.hargaKamar * parseInt(durasiInap) * (1 - tarifKamar.diskonKamar / 100));
+            const url = `http://localhost:5173/confirm_payment/${reservation.idReservasi}`;
             const qrCode = await QRCode.toDataURL(url);
-            const payment = await prisma.payment.create({
+            const payment = await prisma.pembayaran.create({
                 data: {
-                    noTamu: reservation.noTamu,
-                    noReservasi: reservation.reservationId,
+                    idTamu: reservation.idTamu,
+                    idReservasi: reservation.idReservasi,
                     statusPembayaran: "pending",
                     jumlahBayar,
                     metodePembayaran: "????",
                     tanggalBayar: checkOutDate,
                 }
             });
-            const updatedReservasion = await prisma.reservation.update({
+            const updatedReservasion = await prisma.reservasi.update({
                 where: {
-                    reservationId: reservation.reservationId
+                    idReservasi: reservation.idReservasi
                 },
                 data: {
-                    noPayment: payment.paymentId
+                    idPembayaran: payment.idPembayaran
                 }
             });
 
             // return { reservation, payment, qrCode };
             return {
-                reservationId: reservation.reservationId,
-                paymentId: payment.paymentId,
+                reservationId: reservation.idReservasi,
+                paymentId: payment.idPembayaran,
                 checkInDate: tanggalCheckIn,
                 checkOutDate: checkOutDate,
                 stayDuration: parseInt(durasiInap),
@@ -84,11 +82,11 @@ export const addReservation = async (req: Request, res: Response) => {
 
 export const getReservasion = async (req: Request, res: Response) => {
     try {
-        const getReservasion = await prisma.reservation.findMany({
+        const getReservasion = await prisma.reservasi.findMany({
             include: {
                 kamar: true,
                 tamu: true,
-                Payment: true
+                Pembayaran: true
             }
         })
         res.json({
@@ -108,19 +106,46 @@ export const updatedReservasion = async (req: Request, res: Response) => {
     const { reservationId, statusReservasi } = req.body;
 
     try {
-        const updatedReservation = await prisma.reservation.update({
-            where: {
-                reservationId: parseFloat(reservationId)
-            },
-            data: {
-                statusReservasi: statusReservasi
+        const result = await prisma.$transaction(async (prisma) => {
+            const updatedReservation = await prisma.reservasi.update({
+                where: {
+                    idReservasi: parseFloat(reservationId)
+                },
+                data: {
+                    statusReservasi: statusReservasi
+                }
+            });
+
+            // Jika status reservasi diupdate menjadi 'confirmed', update status kamar menjadi 'reserved'
+            if (statusReservasi === 'Diterima') {
+                const reservationDetails = await prisma.reservasi.findUnique({
+                    where: {
+                        idReservasi: parseFloat(reservationId)
+                    },
+                    include: {
+                        kamar: true // Pastikan relasi dengan kamar sudah benar
+                    }
+                });
+
+                if (reservationDetails && reservationDetails.kamar) {
+                    await prisma.kamar.update({
+                        where: {
+                            idKamar: reservationDetails.kamar.idKamar
+                        },
+                        data: {
+                            statusKamar: 'Dipesan'
+                        }
+                    });
+                }
             }
+
+            return updatedReservation;
         });
 
         res.json({
             status: 200,
-            message: "Status reservasi berhasil diupdate!",
-            data: updatedReservation
+            message: "Status reservasi dan kamar berhasil diupdate!",
+            data: result
         });
     } catch (error: any) {
         res.json({
@@ -133,9 +158,9 @@ export const updatedReservasion = async (req: Request, res: Response) => {
 export const deleteReservasion = async (req: Request, res: Response) => {
     const { reservationId } = req.params
     try {
-        const deletedReservation = await prisma.reservation.delete({
+        const deletedReservation = await prisma.reservasi.delete({
             where: {
-                reservationId: parseFloat(reservationId)
+                idReservasi: parseFloat(reservationId)
             }
         })
         if (!deletedReservation) {
@@ -162,14 +187,14 @@ export const getReservationById = async (req: Request, res: Response) => {
     const { reservationId } = req.params; // Mengambil ID dari parameter URL
 
     try {
-        const reservation = await prisma.reservation.findUnique({
+        const reservation = await prisma.reservasi.findUnique({
             where: {
-                reservationId: parseInt(reservationId)
+                idReservasi: parseInt(reservationId)
             },
             include: {
                 kamar: true,
                 tamu: true,
-                Payment: true
+                Pembayaran: true
             }
         });
 
@@ -193,13 +218,51 @@ export const getReservationById = async (req: Request, res: Response) => {
     }
 }
 
+export const getReservationByUserId = async (req: Request, res: Response) => {
+    const { userId } = req.params;
+
+    try {
+        const reservations = await prisma.reservasi.findMany({
+            where: {
+                idTamu: parseInt(userId)
+            },
+            include: {
+                kamar: {
+                    include: {
+                        Gambar: true,
+                    }
+                },
+                Pembayaran: true
+            }
+        });
+
+        if (reservations.length === 0) {
+            return res.status(404).json({
+                status: 404,
+                message: "Reservasi untuk user ini tidak ditemukan"
+            });
+        }
+
+        res.json({
+            status: 200,
+            message: "Data reservasi ditemukan",
+            data: reservations
+        });
+    } catch (error: any) {
+        res.status(400).json({
+            status: 400,
+            message: error.message
+        });
+    }
+}
+
 export const getPaymentById = async (req: Request, res: Response) => {
     const { paymentId } = req.params; // Mengambil ID dari parameter URL
 
     try {
-        const payment = await prisma.payment.findUnique({
+        const payment = await prisma.pembayaran.findUnique({
             where: {
-                paymentId: parseInt(paymentId)
+                idPembayaran: parseInt(paymentId)
             }
         });
 
@@ -224,12 +287,12 @@ export const getPaymentById = async (req: Request, res: Response) => {
 }
 
 export const confirmPayment = async (req: Request, res: Response) => {
-    const { paymentId, amount } = req.body;
+    const { paymentId, amount, metodePembayaran } = req.body;
 
     try {
-        const payment = await prisma.payment.findUnique({
+        const payment = await prisma.pembayaran.findUnique({
             where: {
-                paymentId: parseFloat(paymentId)
+                idPembayaran: parseFloat(paymentId)
             },
         });
 
@@ -247,25 +310,26 @@ export const confirmPayment = async (req: Request, res: Response) => {
             });
         }
 
-        if (payment.jumlahBayar !== parseFloat(amount)) {
-            return res.status(400).json({
-                status: 400,
-                message: "Jumlah bayar tidak sesuai!"
-            });
-        }
+        // if (payment.jumlahBayar !== parseFloat(amount)) {
+        //     return res.status(400).json({
+        //         status: 400,
+        //         message: "Jumlah bayar tidak sesuai!"
+        //     });
+        // }
 
-        const updatePayment = await prisma.payment.update({
+        const updatePayment = await prisma.pembayaran.update({
             where: {
-                paymentId: parseFloat(paymentId),
+                idPembayaran: parseFloat(paymentId),
             },
             data: {
-                statusPembayaran: "paid"
+                statusPembayaran: "lunas",
+                metodePembayaran,
             }
         });
 
         res.status(200).json({
             status: 200,
-            message: "Status pembayaran berhasil dikonfirmasi! Silakan tunggu konfirmasi dari pihak admin.",
+            message: "Status pembayaran berhasil dikonfirmasi! Silakan tunggu konfirmasi dari pihak Hotel.",
             data: updatePayment
         });
     } catch (error: any) {
