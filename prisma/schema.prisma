@@ -13,134 +13,115 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role_tamu {
+
+enum PeranTamu {
   Admin
-  User
+  Pengguna
 }
 
-model User {
-  tamuId             Int           @id @default(autoincrement())
-  namaTamu           String        @db.VarChar(255)
-  emailTamu          String        @db.VarChar(255)
-  jenisKelamin       String        @db.Char(20)
-  umurTamu           Int           @default(0)
-  nomerTelephoneTamu String        @unique @db.VarChar(15)
-  provinsi           String        @db.VarChar(100)
-  kota               String        @db.VarChar(100)
-  kecamatan          String        @db.VarChar(100)
-  kelurahan          String        @db.VarChar(20)
-  password           String
-  roleTamu           Role_tamu     @default(User)
-  statusTamu         String
-  pekerjaan          String
-  dibuatTanggal      DateTime      @default(now())
-  diupdateTanggal    DateTime      @default(now())
-  Reservation        Reservation[]
-  payment            Payment[]
+model Tamu {
+  idTamu            Int           @id @default(autoincrement())
+  namaTamu          String        @db.VarChar(255)
+  emailTamu         String        @db.VarChar(255)
+  jenisKelamin      String        @db.Char(20)
+  umurTamu          Int           @default(0)
+  nomorTeleponTamu  String        @unique @db.VarChar(15)
+  provinsi          String        @db.VarChar(100)
+  kota              String        @db.VarChar(100)
+  kecamatan         String        @db.VarChar(100)
+  kelurahan         String        @db.VarChar(20)
+  kataSandi         String
+  peranTamu         PeranTamu     @default(Pengguna)
+  statusTamu        String
+  pekerjaan         String
+  tanggalDibuat     DateTime      @default(now())
+  tanggalDiupdate   DateTime      @default(now())
+  Reservasi         Reservasi[]
+  Pembayaran        Pembayaran[]
 }
 
+enum StatusKamar {
+  Tersedia
+  TidakTersedia
+  Dipesan
+  SedangDiperbaiki
+  Lainnya
+}
 model Kamar {
-  nomerKamar     Int             @id @default(autoincrement())
-  namaKamar      String          @db.VarChar(255)
-  ukuranKamar    String          @db.VarChar(100)
-  deskripsiKamar String          @db.VarChar(255)
-  hargaKamar     Float           @default(0) @db.Float
-  typeKamar      String          @db.VarChar(100)
-  ratingKamar    Float           @db.Float
-  diskonKamar    Float           @db.Float
-  statusKamar    String          @db.VarChar(50)
-  fasilitasId    Int?
-  fasilitasKamar FasilitasKamar? @relation(fields: [fasilitasId], references: [id], onDelete: Cascade)
-  images         Image[]
-  Reservation    Reservation[]
+  idKamar           Int           @id @default(autoincrement())
+  namaKamar         String        @db.VarChar(255)
+  ukuranKamar       String        @db.VarChar(100)
+  deskripsiKamar    String        @db.VarChar(255)
+  hargaKamar        Float         @default(0) @db.Float
+  tipeKamar         TipeKamar
+  ratingKamar       Float         @db.Float
+  diskonKamar       Float         @db.Float
+  statusKamar       StatusKamar   @default(Tersedia)
+  Gambar            Gambar[]
+  Reservasi         Reservasi[]
 
   @@map("kamar")
 }
 
-enum RoomType {
-  Standard
+enum TipeKamar {
+  Standar
   Deluxe
   Suite
   Premium
 }
 
-model FasilitasKamar {
-  id                 Int      @id @default(autoincrement())
-  nokamar            Int
-  namaFasilitas      String   @db.VarChar(255)
-  deskripsiFasilitas String
-  hargaFasilitas     Float    @db.Float
-  typeFasilitas      RoomType
-  Kamar              Kamar[]
+model Gambar {
+  idGambar          Int           @id @default(autoincrement())
+  namaGambar        String        @db.VarChar(255)
+  urlGambar         String        @db.VarChar(255)
+  idKamar           Int
+  kamar             Kamar         @relation(fields: [idKamar], references: [idKamar], onDelete: Cascade)
 
-  @@map("fasilitas_kamar")
+  @@map("gambar")
 }
 
-model Image {
-  id      Int    @id @default(autoincrement())
-  name    String @db.VarChar(255)
-  url     String @db.VarChar(255)
-  noKamar Int
-  kamar   Kamar  @relation(fields: [noKamar], references: [nomerKamar], onDelete: Cascade)
-
-  @@map("images")
+enum JenisReservasi {
+  Pemesanan
+  Reservasi
+  Lainnya
 }
 
-// model Reservation {
-//   reservationId   Int       @id @default(autoincrement())
-//   noKamar         Int
-//   noTamu          Int
-//   tanggalCheckIn  DateTime
-//   tanggalCheckOut DateTime
-//   statusReservasi String    @default("pending")
-//   kamar           Kamar     @relation(fields: [noKamar], references: [nomerKamar])
-//   tamu            User      @relation(fields: [noTamu], references: [tamuId])
-//   Payment         Payment[]
-
-//   @@map("reservation")
-// }
-
-// model Payment {
-//   paymentId        Int         @id @default(autoincrement())
-//   noTamu           Int
-//   noReservasi      Int
-//   jumlahBayar      Float       @db.Float
-//   tanggalBayar     DateTime    @default(now())
-//   metodePembayaran String      @db.VarChar(50)
-//   statusPembayaran String      @db.VarChar(50)
-//   tamu             User        @relation(fields: [noTamu], references: [tamuId])
-//   reservasi        Reservation @relation(fields: [noReservasi], references: [reservationId])
-
-//   @@map("payment")
-// }
-
-model Reservation {
-  reservationId   Int      @id @default(autoincrement())
-  noKamar         Int
-  noTamu          Int
-  noPayment       Int?     @unique
-  tanggalCheckIn  DateTime
-  tanggalCheckOut DateTime
-  durasiMenginap  Int      @default(1)
-  statusReservasi String   @default("pending")
-  kamar           Kamar    @relation(fields: [noKamar], references: [nomerKamar], onDelete: Cascade)
-  tamu            User     @relation(fields: [noTamu], references: [tamuId], onDelete: Cascade)
-  Payment         Payment?
-
-  @@map("reservation")
+enum StatusReservasi {
+  Menunggu
+  Diterima
+  Ditolak
 }
 
-model Payment {
-  paymentId        Int         @id @default(autoincrement())
-  noTamu           Int
-  noReservasi      Int         @unique
-  jumlahBayar      Float       @db.Float
-  tanggalBayar     DateTime    @default(now())
-  batasWaktuBayar  DateTime    @default(now())
-  metodePembayaran String      @db.VarChar(50)
-  statusPembayaran String      @db.VarChar(50)
-  tamu             User        @relation(fields: [noTamu], references: [tamuId], onDelete: Cascade)
-  reservasi        Reservation @relation(fields: [noReservasi], references: [reservationId], onDelete: Cascade)
+model Reservasi {
+  idReservasi       Int             @id @default(autoincrement())
+  idKamar           Int
+  idTamu            Int
+  idPembayaran      Int?            @unique
+  tanggalCheckIn    DateTime
+  tanggalCheckOut   DateTime
+  durasiMenginap    Int             @default(1)
+  statusReservasi   StatusReservasi @default(Menunggu) // Menggunakan enum untuk status reservasi
+  jenisReservasi    JenisReservasi  @default(Reservasi)
+  jumlahTamu        Int             @default(1)
+  permintaanTamu    String?
+  kamar             Kamar           @relation(fields: [idKamar], references: [idKamar], onDelete: Cascade)
+  tamu              Tamu            @relation(fields: [idTamu], references: [idTamu], onDelete: Cascade)
+  Pembayaran        Pembayaran?
 
-  @@map("payment")
+  @@map("reservasi")
+}
+
+model Pembayaran {
+  idPembayaran      Int         @id @default(autoincrement())
+  idTamu            Int
+  idReservasi       Int         @unique
+  jumlahBayar       Float       @db.Float
+  tanggalBayar      DateTime    @default(now())
+  batasWaktuBayar   DateTime    @default(now())
+  metodePembayaran  String      @db.VarChar(50)
+  statusPembayaran  String      @db.VarChar(50)
+  tamu              Tamu        @relation(fields: [idTamu], references: [idTamu], onDelete: Cascade)
+  reservasi         Reservasi   @relation(fields: [idReservasi], references: [idReservasi], onDelete: Cascade)
+
+  @@map("pembayaran")
 }
