@@ -2,7 +2,7 @@ import db from '../configs/db.config';
 import { Request, Response } from 'express';
 import { UploadedFile } from 'express-fileupload';
 import path from "path"
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -160,7 +160,7 @@ export const createRoom = async (req: Request, res: Response) => {
 
         let hargaKamarBase;
         switch (typeKamar) {
-            case "Standard":
+            case "Standar":
                 hargaKamarBase = 150000;
                 break;
             case "Deluxe":
@@ -312,7 +312,8 @@ export const updateRoom = async (req: Request, res: Response) => {
                 ratingKamar: ratingKamar,
                 diskonKamar: parseInt(diskonKamar),
                 statusKamar: statusKamar,
-                hargaKamar: hargaKamarBase
+                hargaKamar: hargaKamarBase,
+                tanggalDiupdate: new Date(),
             }
         });
 
@@ -382,6 +383,17 @@ export const getRoomDetails = async (req: Request, res: Response) => {
             },
             include: {
                 Gambar: true,
+                Komentar: {
+                    include: {
+                        tamu: {
+                            select: {
+                                namaTamu: true,
+                                kota: true,
+                                provinsi: true
+                            }
+                        }
+                    }
+                }
             }
         })
         if (!getDetailRooms) {
@@ -399,6 +411,30 @@ export const getRoomDetails = async (req: Request, res: Response) => {
         return res.json({
             status: 400,
             message: error.message
+        })
+    }
+}
+
+
+export const postComments = async (req: Request, res: Response) => {
+    const { idTamu, idKamar, tipeKomentar, komentar } = req.body
+    const { roomId } = req.params
+
+    try {
+        const createComments = await prisma.komentar.create({
+            data: {
+                idTamu: parseInt(idTamu),
+                idKamar: parseInt(roomId),
+                TipeKomentar: tipeKomentar,
+                Komentar: komentar
+            }
+        })
+        res.status(200).json({
+            msg: "komentar berhasil ditambahkan"
+        })
+    } catch (error: any) {
+        res.json({
+            msg: error.message
         })
     }
 }

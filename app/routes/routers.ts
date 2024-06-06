@@ -1,10 +1,10 @@
 import { authLogin, authLogout } from "../controllers/auth";
-import { getRooms, createRoom, getRoomDetails, deleteRoom, updateRoom, uploadImagesToRooms } from "../controllers/rooms";
+import { getRooms, createRoom, getRoomDetails, deleteRoom, updateRoom, uploadImagesToRooms, postComments } from "../controllers/rooms";
 import { getUsers } from "../controllers/users";
 import express, { Router } from "express"
 import { AuthRegister } from "../controllers/auth";
 import { getKabupaten, getKecamatan, getKelurahan, getProvinsi } from "../controllers/location";
-import { addReservation, confirmPayment, deleteReservasion, getPaymentById, getReservasion, getReservationById, getReservationByUserId, updatedReservasion } from "../controllers/reservation";
+import { addReservation, confirmPayment, deleteReservasion, getAnalytics, getPaymentById, getReservasion, getReservationById, getReservationByUserId, getSuccessfulReservations, updatedReservasion } from "../controllers/reservation";
 import { authenticate } from "../middlewares/middelware";
 const routers: Router = express.Router();
 
@@ -23,6 +23,7 @@ routers.get('/rooms/:roomId', getRoomDetails);
 routers.delete('/rooms/:roomId', deleteRoom);
 routers.post('/rooms/uploadimages/:roomId', uploadImagesToRooms);
 routers.put('/rooms/:roomId', updateRoom);
+routers.post(`/rooms/comments/:roomId`, postComments)
 
 
 // reservasi
@@ -32,6 +33,8 @@ routers.put('/reservation', updatedReservasion);
 routers.delete('/reservation/:reservationId', deleteReservasion);
 routers.get('/reservation/:reservationId', getReservationById);
 routers.get(`/reservation/user/:userId`, getReservationByUserId);
+routers.get(`/analytics`, getAnalytics)
+routers.get(`/successful-reservations`, getSuccessfulReservations)
 
 // payment
 routers.post('/confirm-payment', confirmPayment);

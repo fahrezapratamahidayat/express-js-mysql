@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
 import QRCode from 'qrcode';
 import { addDays, format } from "date-fns";
+import { startOfDay, startOfMonth, startOfYear } from 'date-fns';
 
 const prisma = new PrismaClient();
 
@@ -9,7 +10,17 @@ export const addReservation = async (req: Request, res: Response) => {
     const { noKamar, noTamu, checkIn, durasiInap, jumlahTamu, permintaanTamu } = req.body;
     const tanggalCheckIn = new Date(checkIn);
     const checkOutDate = addDays(tanggalCheckIn, parseInt(durasiInap));
+    const hariIni = new Date();
+    let batasWaktuBayar;
 
+    // Menentukan batas waktu bayar berdasarkan jarak tanggal check-in
+    if (tanggalCheckIn.getDate() === addDays(hariIni, 1).getDate()) {
+        // Jika check-in adalah besok, batas waktu bayar adalah 12 jam dari sekarang
+        batasWaktuBayar = addDays(hariIni, 0.5); // 12 jam dari sekarang
+    } else {
+        // Jika check-in lebih dari satu hari lagi, batas waktu bayar adalah 24 jam dari sekarang
+        batasWaktuBayar = addDays(hariIni, 1); // 24 jam dari sekarang
+    }
     try {
         const result = await prisma.$transaction(async (prisma) => {
             const reservation = await prisma.reservasi.create({
@@ -45,6 +56,7 @@ export const addReservation = async (req: Request, res: Response) => {
                     jumlahBayar,
                     metodePembayaran: "????",
                     tanggalBayar: checkOutDate,
+                    batasWaktuBayar
                 }
             });
             const updatedReservasion = await prisma.reservasi.update({
@@ -303,10 +315,19 @@ export const confirmPayment = async (req: Request, res: Response) => {
             });
         }
 
-        if (payment.statusPembayaran === "paid") {
+        if (payment.statusPembayaran === "lunas") {
             return res.status(409).json({
                 status: 409,
                 message: "Pembayaran sudah dikonfirmasi sebelumnya."
+            });
+        }
+
+        const waktuSekarang = new Date();
+        const batasWaktuBayar = new Date(payment.batasWaktuBayar);
+        if (waktuSekarang > batasWaktuBayar) {
+            return res.status(400).json({
+                status: 400,
+                message: "Pembayaran gagal, melewati batas waktu yang ditentukan."
             });
         }
 
@@ -331,6 +352,93 @@ export const confirmPayment = async (req: Request, res: Response) => {
             status: 200,
             message: "Status pembayaran berhasil dikonfirmasi! Silakan tunggu konfirmasi dari pihak Hotel.",
             data: updatePayment
+        });
+    } catch (error: any) {
+        res.status(400).json({
+            status: 400,
+            message: error.message
+        });
+    }
+}
+
+export const getAnalytics = async (req: Request, res: Response) => {
+    const { period } = req.query; // 'daily', 'bulanan', 'tahunan'
+    let dateFilter;
+
+    switch (period) {
+        case 'daily':
+            dateFilter = startOfDay(new Date());
+            break;
+        case 'bulanan':
+            dateFilter = startOfMonth(new Date());
+            break;
+        case 'tahunan':
+            dateFilter = startOfYear(new Date());
+            break;
+        default:
+            dateFilter = startOfMonth(new Date());
+            break;
+    }
+
+    try {
+        const totalRevenue = await prisma.pembayaran.aggregate({
+            _sum: {
+                jumlahBayar: true
+            },
+            where: {
+                statusPembayaran: "lunas",
+                tanggalBayar: {
+                    gte: dateFilter
+                }
+            }
+        });
+        const totalMembers = await prisma.tamu.count();
+        const totalRooms = await prisma.kamar.count()
+
+        const totalReservations = await prisma.reservasi.count({
+            where: {
+                tanggalCheckIn: {
+                    gte: dateFilter
+                }
+            }
+        });
+
+        res.json({
+            status: 200,
+            message: `Total pendapatan dari ${period} berhasil diambil.`,
+            data: {
+                totalPendapatan: totalRevenue._sum.jumlahBayar || 0,
+                totalPengguna: totalMembers,
+                totalReservasi: totalReservations,
+                totalKamar: totalRooms
+            }
+        });
+    } catch (error: any) {
+        res.status(400).json({
+            status: 400,
+            message: error.message
+        });
+    }
+}
+
+export const getSuccessfulReservations = async (req: Request, res: Response) => {
+    try {
+        const successfulReservations = await prisma.reservasi.findMany({
+            where: {
+                Pembayaran: {
+                    statusPembayaran: "lunas"
+                }
+            },
+            include: {
+                tamu: true,
+                Pembayaran: true
+            }
+        });
+
+        res.json({
+            status: 200,
+            message: "Reservasi dengan transaksi lunas berhasil diambil.",
+            data: successfulReservations
         });
     } catch (error: any) {
         res.status(400).json({
