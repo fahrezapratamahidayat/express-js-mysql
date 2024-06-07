@@ -4,8 +4,9 @@ import { getUsers } from "../controllers/users";
 import express, { Router } from "express"
 import { AuthRegister } from "../controllers/auth";
 import { getKabupaten, getKecamatan, getKelurahan, getProvinsi } from "../controllers/location";
-import { addReservation, confirmPayment, deleteReservasion, getAnalytics, getPaymentById, getReservasion, getReservationById, getReservationByUserId, getSuccessfulReservations, updatedReservasion } from "../controllers/reservation";
+import { addReservation, confirmPayment, deleteReservasion, getPaymentById, getReservasion, getReservationById, getReservationByUserId, getSuccessfulReservations, updatedReservasion } from "../controllers/reservation";
 import { authenticate } from "../middlewares/middelware";
+import { getAnalytics, getMonthlyRevenue } from "../controllers/analytics-controllers";
 const routers: Router = express.Router();
 
 // Users
@@ -33,8 +34,13 @@ routers.put('/reservation', updatedReservasion);
 routers.delete('/reservation/:reservationId', deleteReservasion);
 routers.get('/reservation/:reservationId', getReservationById);
 routers.get(`/reservation/user/:userId`, getReservationByUserId);
-routers.get(`/analytics`, getAnalytics)
 routers.get(`/successful-reservations`, getSuccessfulReservations)
+
+
+// analytics
+routers.get(`/analytics`, getAnalytics);
+routers.get(`/analytics/monthly-revenue`, getMonthlyRevenue)
+
 
 // payment
 routers.post('/confirm-payment', confirmPayment);
