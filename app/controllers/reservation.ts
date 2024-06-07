@@ -361,66 +361,6 @@ export const confirmPayment = async (req: Request, res: Response) => {
     }
 }
 
-export const getAnalytics = async (req: Request, res: Response) => {
-    const { period } = req.query; // 'daily', 'bulanan', 'tahunan'
-    let dateFilter;
-
-    switch (period) {
-        case 'daily':
-            dateFilter = startOfDay(new Date());
-            break;
-        case 'bulanan':
-            dateFilter = startOfMonth(new Date());
-            break;
-        case 'tahunan':
-            dateFilter = startOfYear(new Date());
-            break;
-        default:
-            dateFilter = startOfMonth(new Date());
-            break;
-    }
-
-    try {
-        const totalRevenue = await prisma.pembayaran.aggregate({
-            _sum: {
-                jumlahBayar: true
-            },
-            where: {
-                statusPembayaran: "lunas",
-                tanggalBayar: {
-                    gte: dateFilter
-                }
-            }
-        });
-        const totalMembers = await prisma.tamu.count();
-        const totalRooms = await prisma.kamar.count()
-
-        const totalReservations = await prisma.reservasi.count({
-            where: {
-                tanggalCheckIn: {
-                    gte: dateFilter
-                }
-            }
-        });
-
-        res.json({
-            status: 200,
-            message: `Total pendapatan dari ${period} berhasil diambil.`,
-            data: {
-                totalPendapatan: totalRevenue._sum.jumlahBayar || 0,
-                totalPengguna: totalMembers,
-                totalReservasi: totalReservations,
-                totalKamar: totalRooms
-            }
-        });
-    } catch (error: any) {
-        res.status(400).json({
-            status: 400,
-            message: error.message
-        });
-    }
-}
-
 export const getSuccessfulReservations = async (req: Request, res: Response) => {
     try {
         const successfulReservations = await prisma.reservasi.findMany({
