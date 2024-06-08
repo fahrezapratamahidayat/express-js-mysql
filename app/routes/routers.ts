@@ -6,7 +6,7 @@ import { AuthRegister } from "../controllers/auth";
 import { getKabupaten, getKecamatan, getKelurahan, getProvinsi } from "../controllers/location";
 import { addReservation, confirmPayment, deleteReservasion, getPaymentById, getReservasion, getReservationById, getReservationByUserId, getSuccessfulReservations, updatedReservasion } from "../controllers/reservation";
 import { authenticate } from "../middlewares/middelware";
-import { getAnalytics, getMonthlyRevenue } from "../controllers/analytics-controllers";
+import { getAnalytics, getMonthlyRevenue, getTotalRevenue } from "../controllers/analytics-controllers";
 const routers: Router = express.Router();
 
 // Users
@@ -40,6 +40,7 @@ routers.get(`/successful-reservations`, getSuccessfulReservations)
 // analytics
 routers.get(`/analytics`, getAnalytics);
 routers.get(`/analytics/monthly-revenue`, getMonthlyRevenue)
+routers.get(`/analytics/revenue`, getTotalRevenue);
 
 
 // payment
