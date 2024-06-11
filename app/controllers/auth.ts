@@ -36,7 +36,7 @@ const authLogin = async (req: Request, res: Response) => {
                 namaTamu: selectUser.namaTamu,
                 emailTamu: selectUser.emailTamu,
                 password: selectUser.kataSandi,
-                peranTamu: selectUser.peranTamu,
+                peran: selectUser.peranTamu,
                 statusTamu: selectUser.statusTamu,
                 pekerjaan: selectUser.pekerjaan,
                 tanggalDibuat: selectUser.tanggalDibuat,
@@ -112,6 +112,97 @@ const AuthRegister = async (req: Request, res: Response) => {
             status: 200,
             message: "success",
             data: AddTamu
+        })
+    } catch (error: any) {
+        res.json({
+            status: 400,
+            message: error.message
+        });
+    }
+}
+
+export const authLoginPegawai = async (req: Request, res: Response) => {
+    const { idPegawai, password } = req.body
+
+    try {
+        const findPegawai = await prisma.pegawai.findUnique({
+            where: {
+                idPegawai: parseInt(idPegawai),
+            }
+        })
+        if (!findPegawai) {
+            return res.status(404).json({
+                status: 404,
+                message: "pegawai tidak ditemukan"
+            })
+        }
+
+        const confirmPassowrd = bcryptjs.compareSync(password, findPegawai.kataSandi);
+        if (!confirmPassowrd) {
+            return res.status(400).json({
+                status: 400,
+                message: "password tidak sama!, jika lupa hubungi admin atau pengola",
+            })
+        }
+        const token = jwt.sign({
+            idPegawai: findPegawai.idPegawai,
+            namaPegawai: findPegawai.namaPegawai,
+            emailPegawai: findPegawai.emailPegawai,
+            password: findPegawai.kataSandi,
+            peran: "Pegawai",
+            tanggalDibuat: findPegawai.tanggalDibuat,
+            tanggalDiupdate: findPegawai.tanggalDiupdate,
+        }, process.env.ACCESS_TOKEN_AUTH as string, { expiresIn: '1d' });
+        res.cookie('refreshToken', token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'lax',
+            maxAge: 24 * 60 * 60 * 1000
+        });
+        res.status(200).json({
+            status: 200,
+            message: "success",
+            token: token
+        });
+    } catch (error: any) {
+        res.status(400).json({
+            status: 400,
+            message: error.message
+        })
+    }
+}
+
+
+export const authRegisterPegawai = async (req: Request, res: Response) => {
+    const { namaPegawai, emailPegawai, password, jenisKelamin, rolePegawai, alamat, nomorTelepon } = req.body
+    try {
+        const findPegawai = await prisma.pegawai.findMany({
+            where: {
+                emailPegawai: emailPegawai
+            }
+        })
+        if (findPegawai.length > 0) {
+            return res.status(400).json({
+                status: 400,
+                message: "email sudah didaftarkan"
+            })
+        }
+        const salt = bcryptjs.genSaltSync(10);
+        const hashPassword = bcryptjs.hashSync(password, salt);
+        const AddPegawai = await prisma.pegawai.create({
+            data: {
+                namaPegawai,
+                emailPegawai,
+                kataSandi: hashPassword,
+                jenisKelamin,
+                alamat: "",
+                nomorTelepon: "",
+            }
+        })
+        res.status(200).json({
+            status: 200,
+            message: "success",
+            data: AddPegawai
         })
     } catch (error: any) {
         res.json({

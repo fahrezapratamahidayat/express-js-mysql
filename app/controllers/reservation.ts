@@ -115,7 +115,7 @@ export const getReservasion = async (req: Request, res: Response) => {
 }
 
 export const updatedReservasion = async (req: Request, res: Response) => {
-    const { reservationId, statusReservasi } = req.body;
+    const { reservationId, statusReservasi, noPegawai } = req.body;
 
     try {
         const result = await prisma.$transaction(async (prisma) => {
@@ -124,20 +124,21 @@ export const updatedReservasion = async (req: Request, res: Response) => {
                     idReservasi: parseFloat(reservationId)
                 },
                 data: {
-                    statusReservasi: statusReservasi
+                    statusReservasi: statusReservasi,
+                    idPegawaiPenanggungJawab: parseInt(noPegawai)
                 }
             });
 
-            // Jika status reservasi diupdate menjadi 'confirmed', update status kamar menjadi 'reserved'
             if (statusReservasi === 'Diterima') {
                 const reservationDetails = await prisma.reservasi.findUnique({
                     where: {
                         idReservasi: parseFloat(reservationId)
                     },
                     include: {
-                        kamar: true // Pastikan relasi dengan kamar sudah benar
+                        kamar: true
                     }
                 });
+
 
                 if (reservationDetails && reservationDetails.kamar) {
                     await prisma.kamar.update({
@@ -148,6 +149,14 @@ export const updatedReservasion = async (req: Request, res: Response) => {
                             statusKamar: 'Dipesan'
                         }
                     });
+                    await prisma.pembayaran.update({
+                        where: {
+                            idReservasi: parseFloat(reservationId)
+                        },
+                        data: {
+                            idPegawaiPenerima: parseInt(noPegawai)
+                        }
+                    })
                 }
             }
 

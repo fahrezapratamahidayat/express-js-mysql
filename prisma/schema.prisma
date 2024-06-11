@@ -18,26 +18,32 @@ enum PeranTamu {
   Pengguna
 }
 
+enum MetodeDaftar {
+  Online
+  Offline
+}
+
 model Tamu {
-  idTamu           Int          @id @default(autoincrement())
-  namaTamu         String       @db.VarChar(255)
-  emailTamu        String       @db.VarChar(255)
-  jenisKelamin     String       @db.Char(20)
-  umurTamu         Int          @default(0)
-  nomorTeleponTamu String       @unique @db.VarChar(15)
-  provinsi         String       @db.VarChar(100)
-  kota             String       @db.VarChar(100)
-  kecamatan        String       @db.VarChar(100)
-  kelurahan        String       @db.VarChar(20)
-  kataSandi        String
-  peranTamu        PeranTamu    @default(Pengguna)
-  statusTamu       String
-  pekerjaan        String
-  tanggalDibuat    DateTime     @default(now())
-  tanggalDiupdate  DateTime     @default(now())
-  Reservasi        Reservasi[]
-  Pembayaran       Pembayaran[]
-  Komentar         Komentar[]
+  idTamu            Int          @id @default(autoincrement())
+  namaTamu          String       @db.VarChar(255)
+  emailTamu         String       @db.VarChar(255)
+  jenisKelamin      String       @db.Char(20)
+  umurTamu          Int          @default(0)
+  nomorTeleponTamu  String       @unique @db.VarChar(15)
+  provinsi          String       @db.VarChar(100)
+  kota              String       @db.VarChar(100)
+  kecamatan         String       @db.VarChar(100)
+  kelurahan         String       @db.VarChar(20)
+  kataSandi         String
+  peranTamu         PeranTamu    @default(Pengguna)
+  statusTamu        String
+  pekerjaan         String
+  metodePendaftaran MetodeDaftar @default(Online)
+  tanggalDibuat     DateTime     @default(now())
+  tanggalDiupdate   DateTime     @default(now())
+  Reservasi         Reservasi[]
+  Pembayaran        Pembayaran[]
+  Komentar          Komentar[]
 }
 
 enum StatusKamar {
@@ -96,36 +102,46 @@ enum StatusReservasi {
   Ditolak
 }
 
+enum metodeReservasi {
+  Offline
+  Online
+}
+
 model Reservasi {
-  idReservasi     Int             @id @default(autoincrement())
-  idKamar         Int
-  idTamu          Int
-  idPembayaran    Int?            @unique
-  tanggalCheckIn  DateTime
-  tanggalCheckOut DateTime
-  durasiMenginap  Int             @default(1)
-  statusReservasi StatusReservasi @default(Menunggu) // Menggunakan enum untuk status reservasi
-  jenisReservasi  JenisReservasi  @default(Reservasi)
-  jumlahTamu      Int             @default(1)
-  permintaanTamu  String?
-  kamar           Kamar           @relation(fields: [idKamar], references: [idKamar], onDelete: Cascade)
-  tamu            Tamu            @relation(fields: [idTamu], references: [idTamu], onDelete: Cascade)
-  Pembayaran      Pembayaran?
+  idReservasi              Int             @id @default(autoincrement())
+  idKamar                  Int
+  idTamu                   Int
+  idPembayaran             Int?            @unique
+  tanggalCheckIn           DateTime
+  tanggalCheckOut          DateTime
+  durasiMenginap           Int             @default(1)
+  statusReservasi          StatusReservasi @default(Menunggu)
+  jenisReservasi           JenisReservasi  @default(Reservasi)
+  metodeReservasi          metodeReservasi @default(Online)
+  jumlahTamu               Int             @default(1)
+  permintaanTamu           String?
+  kamar                    Kamar           @relation(fields: [idKamar], references: [idKamar])
+  tamu                     Tamu            @relation(fields: [idTamu], references: [idTamu])
+  Pembayaran               Pembayaran?
+  Pegawai                  Pegawai?        @relation(fields: [idPegawaiPenanggungJawab], references: [idPegawai])
+  idPegawaiPenanggungJawab Int?
 
   @@map("reservasi")
 }
 
 model Pembayaran {
-  idPembayaran     Int       @id @default(autoincrement())
-  idTamu           Int
-  idReservasi      Int       @unique
-  jumlahBayar      Float     @db.Float
-  tanggalBayar     DateTime  @default(now())
-  batasWaktuBayar  DateTime
-  metodePembayaran String    @db.VarChar(50)
-  statusPembayaran String    @db.VarChar(50)
-  tamu             Tamu      @relation(fields: [idTamu], references: [idTamu], onDelete: Cascade)
-  reservasi        Reservasi @relation(fields: [idReservasi], references: [idReservasi], onDelete: Cascade)
+  idPembayaran      Int       @id @default(autoincrement())
+  idTamu            Int
+  idReservasi       Int       @unique
+  jumlahBayar       Float     @db.Float
+  tanggalBayar      DateTime  @default(now())
+  batasWaktuBayar   DateTime
+  metodePembayaran  String    @db.VarChar(50)
+  statusPembayaran  String    @db.VarChar(50)
+  diterimaOleh      Pegawai?  @relation(fields: [idPegawaiPenerima], references: [idPegawai])
+  idPegawaiPenerima Int?
+  tamu              Tamu      @relation(fields: [idTamu], references: [idTamu])
+  reservasi         Reservasi @relation(fields: [idReservasi], references: [idReservasi])
 
   @@map("pembayaran")
 }
@@ -145,4 +161,31 @@ model Komentar {
   tanggalDibuat DateTime     @default(now())
   tamu          Tamu         @relation(fields: [idTamu], references: [idTamu], onDelete: Cascade)
   kamar         Kamar        @relation(fields: [idKamar], references: [idKamar], onDelete: Cascade)
+}
+
+model Pegawai {
+  idPegawai       Int           @id @default(autoincrement())
+  namaPegawai     String        @db.VarChar(255)
+  nomorTelepon    String        @unique @db.VarChar(15)
+  emailPegawai    String        @unique @db.VarChar(255)
+  kataSandi       String
+  jenisKelamin    String        @db.Char(20)
+  alamat          String        @db.VarChar(255)
+  tanggalDibuat   DateTime      @default(now())
+  tanggalDiupdate DateTime      @default(now())
+  Reservasi       Reservasi[]
+  Pembayaran      Pembayaran[]
+  JadwalKerja     JadwalKerja[]
+}
+
+model JadwalKerja {
+  idJadwalKerja   Int      @id @default(autoincrement())
+  idPegawai       Int
+  jamMasuk        String // Format HH:mm, misal "09:00"
+  jamKeluar       String // Format HH:mm, misal "17:00"
+  tanggalMulai    DateTime // Tanggal mulai berlaku jadwal
+  tanggalBerakhir DateTime // Tanggal berakhirnya jadwal
+  pegawai         Pegawai  @relation(fields: [idPegawai], references: [idPegawai])
+
+  @@map("jadwal_kerja")
 }

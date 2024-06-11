@@ -1,4 +1,4 @@
-import { authLogin, authLogout } from "../controllers/auth";
+import { authLogin, authLoginPegawai, authLogout, authRegisterPegawai } from "../controllers/auth";
 import { getRooms, createRoom, getRoomDetails, deleteRoom, updateRoom, uploadImagesToRooms, postComments } from "../controllers/rooms";
 import { getUsers } from "../controllers/users";
 import express, { Router } from "express"
@@ -16,6 +16,8 @@ routers.get('/users', getUsers);
 routers.post('/auth/login', authLogin);
 routers.post('/auth/register', AuthRegister);
 routers.post('/auth/logout', authLogout);
+routers.post(`/auth/login/pegawai`, authLoginPegawai)
+routers.post(`/auth/register/pegawai`, authRegisterPegawai)
 
 // Rooms
 routers.get('/rooms', getRooms);

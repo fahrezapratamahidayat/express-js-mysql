@@ -280,10 +280,9 @@ export const deleteRoom = async (req: Request, res: Response) => {
 export const updateRoom = async (req: Request, res: Response) => {
     const roomId = parseFloat(req.params.roomId);
     const { namaKamar, ukuranKamar, deskripsiKamar, typeKamar, ratingKamar, diskonKamar, statusKamar, namaFasilitas, deskripsiFasilitas, hargaFasilitas, typeFasilitas } = req.body;
-
     let hargaKamarBase;
     switch (typeKamar) {
-        case "Standard":
+        case "Standar":
             hargaKamarBase = 150000;
             break;
         case "Deluxe":
