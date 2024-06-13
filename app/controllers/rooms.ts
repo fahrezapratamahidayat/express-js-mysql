@@ -2,7 +2,7 @@ import db from '../configs/db.config';
 import { Request, Response } from 'express';
 import { UploadedFile } from 'express-fileupload';
 import path from "path"
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client/edge';
 
 const prisma = new PrismaClient();
 

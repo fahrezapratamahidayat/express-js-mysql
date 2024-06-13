@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client/edge";
 import { format, startOfDay, startOfMonth, startOfYear } from "date-fns";
 import { Request, Response } from "express";
 
@@ -80,7 +80,7 @@ export const getMonthlyRevenue = async (req: Request, res: Response): Promise<vo
 
     payments.forEach(payment => {
       const month = payment.tanggalBayar.getMonth();
-      monthlyRevenue[month].total += payment.jumlahBayar;
+      monthlyRevenue[month].total += Number(payment.jumlahBayar);
     });
 
     const formattedData = Object.keys(monthlyRevenue).map(month => ({

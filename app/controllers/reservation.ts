@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client/edge";
 import { Request, Response } from "express";
 import QRCode from 'qrcode';
 import { addDays, format } from "date-fns";

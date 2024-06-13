@@ -4,7 +4,8 @@
   "scripts": {
     "start": "npx tsc -w",
     "dev": "npx nodemon",
-    "build": "tsc --outDir build"
+    "build": "prisma generate && tsc --outDir build",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
