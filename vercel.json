@@ -4,14 +4,17 @@
   },
   "builds": [
     {
-      "src": ".",
-      "use": "@vercel/node"
+      "src": "./app/index.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": "./app/**/*"
+      }
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "/"
+      "src": "//(.*)",
+      "dest": "/app/index.ts"
     }
   ]
 }
