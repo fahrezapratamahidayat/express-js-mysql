@@ -4,26 +4,14 @@
   },
   "builds": [
     {
-      "src": "app/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "app/configs/**",
-          "app/controllers/**",
-          "app/middlewares/**",
-          "app/models/**",
-          "app/routes/**",
-          "app/services/**",
-          "app/utils/**",
-          "app/prisma/schema.prisma"
-        ]
-      }
+      "src": "./build/index.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/app/index.ts"
+      "src": "/(.*)",
+      "dest": "/"
     }
   ]
 }
