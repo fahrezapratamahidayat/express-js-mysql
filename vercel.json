@@ -1,19 +1,28 @@
 {
   "env": {
-    "DATABASE_URL": "DATABASE_URL"
+    "DATABASE_URL": "@database_url"
   },
   "builds": [
     {
       "src": "app/index.ts",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["prisma/schema.prisma"]
+        "includeFiles": [
+          "app/configs/**",
+          "app/controllers/**",
+          "app/middlewares/**",
+          "app/models/**",
+          "app/routes/**",
+          "app/services/**",
+          "app/utils/**",
+          "app/prisma/schema.prisma"
+        ]
       }
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
       "dest": "/app/index.ts"
     }
   ]
