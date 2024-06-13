@@ -31,3 +31,4 @@ prisma/migrations
 *.sln
 *.sw?
 Q
+.vercel
