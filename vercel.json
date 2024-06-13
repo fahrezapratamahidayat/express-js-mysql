@@ -1,0 +1,17 @@
+{
+  "env": {
+    "DATABASE_URL": "@database_url"
+  },
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    }
+  ]
+}
