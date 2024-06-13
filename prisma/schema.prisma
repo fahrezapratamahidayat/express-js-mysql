@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -59,10 +59,10 @@ model Kamar {
   namaKamar       String      @db.VarChar(255)
   ukuranKamar     String      @db.VarChar(100)
   deskripsiKamar  String      @db.VarChar(255)
-  hargaKamar      Float       @default(0) @db.Float
+  hargaKamar      Decimal       @default(0) @db.Decimal
   tipeKamar       TipeKamar
-  ratingKamar     Float       @db.Float
-  diskonKamar     Float       @db.Float
+  ratingKamar     Decimal       @db.Decimal
+  diskonKamar     Decimal       @db.Decimal
   statusKamar     StatusKamar @default(Tersedia)
   tanggalDibuat   DateTime    @default(now())
   tanggalDiupdate DateTime    @default(now())
@@ -133,7 +133,7 @@ model Pembayaran {
   idPembayaran      Int       @id @default(autoincrement())
   idTamu            Int
   idReservasi       Int       @unique
-  jumlahBayar       Float     @db.Float
+  jumlahBayar       Decimal     @db.Decimal
   tanggalBayar      DateTime  @default(now())
   batasWaktuBayar   DateTime
   metodePembayaran  String    @db.VarChar(50)
