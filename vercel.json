@@ -5,16 +5,13 @@
   "builds": [
     {
       "src": "/app/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": "./app/**/*"
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/app/index.js"
+      "dest": "/app/index.ts"
     }
   ]
 }
