@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client/edge";
+import { PrismaClient } from "@prisma/client";
 import { format, startOfDay, startOfMonth, startOfYear } from "date-fns";
 import { Request, Response } from "express";
 
